@@ -281,11 +281,22 @@ class Filter_Items():
         ttk.Label(inner_frame1,text="From").grid(row=1,column=0)
         ttk.Label(inner_frame1,text="To").grid(row=2,column=0)
 
+        self.cmb_ics_date_from_month = ttk.Combobox(inner_frame1, state="readonly", values=[x for x in Utility.month_dictionary(0)])
+        self.cmb_ics_date_from_day = ttk.Combobox(inner_frame1, state="readonly", values=Utility.days_generator())
         self.cmb_ics_date_from_year = ttk.Combobox(inner_frame1,state="readonly",values=Utility.years_generator())
-        self.cmb_ics_date_to_year = ttk.Combobox(inner_frame1, state="readonly", values=Utility.years_generator())
 
-        self.cmb_ics_date_from_year.grid(row=1,column=1,sticky="ew")
-        self.cmb_ics_date_to_year.grid(row=2, column=1,sticky="ew")
+
+        self.cmb_ics_date_to_month = ttk.Combobox(inner_frame1, state="readonly", values=[x for x in Utility.month_dictionary(0)])
+        self.cmb_ics_date_to_day = ttk.Combobox(inner_frame1, state="readonly", values=Utility.days_generator())
+        self.cmb_ics_date_to_year = ttk.Combobox(inner_frame1,state="readonly",values=Utility.years_generator())
+
+        self.cmb_ics_date_from_month.grid(row=1,column=1,sticky="ew")
+        self.cmb_ics_date_from_day.grid(row=1,column=2,sticky="ew")
+        self.cmb_ics_date_from_year.grid(row=1,column=3,sticky="ew")
+
+        self.cmb_ics_date_to_month.grid(row=2, column=1,sticky="ew")
+        self.cmb_ics_date_to_day.grid(row=2, column=2, sticky="ew")
+        self.cmb_ics_date_to_year.grid(row=2, column=3, sticky="ew")
 
         inner_frame1.grid(row=2,column=0,columnspan=3,sticky="ew")
         inner_frame1.grid_columnconfigure(1,weight=1)
@@ -319,11 +330,22 @@ class Filter_Items():
         ttk.Label(inner_frame2, text="From").grid(row=1, column=0)
         ttk.Label(inner_frame2, text="To").grid(row=2, column=0)
 
+        self.cmb_date_acquired_from_month = ttk.Combobox(inner_frame2, state="readonly", values=[x for x in Utility.month_dictionary(0)])
+        self.cmb_date_acquired_from_day = ttk.Combobox(inner_frame2, state="readonly", values=Utility.days_generator())
         self.cmb_date_acquired_from_year = ttk.Combobox(inner_frame2, state="readonly", values=Utility.years_generator())
+
+        self.cmb_date_acquired_to_month = ttk.Combobox(inner_frame2, state="readonly", values=[x for x in Utility.month_dictionary(0)])
+        self.cmb_date_acquired_to_day = ttk.Combobox(inner_frame2, state="readonly", values=Utility.days_generator())
         self.cmb_date_acquired_to_year = ttk.Combobox(inner_frame2, state="readonly", values=Utility.years_generator())
 
-        self.cmb_date_acquired_from_year.grid(row=1, column=1, sticky="ew")
-        self.cmb_date_acquired_to_year.grid(row=2, column=1,sticky="ew")
+
+        self.cmb_date_acquired_from_month.grid(row=1,column=1,sticky="ew")
+        self.cmb_date_acquired_from_day.grid(row=1,column=2,sticky="ew")
+        self.cmb_date_acquired_from_year.grid(row=1, column=3, sticky="ew")
+
+        self.cmb_date_acquired_to_month.grid(row=2,column=1,sticky="ew")
+        self.cmb_date_acquired_to_day.grid(row=2,column=2,sticky="ew")
+        self.cmb_date_acquired_to_year.grid(row=2, column=3,sticky="ew")
 
         inner_frame2.grid(row=7,column=0,columnspan=3,sticky="ew")
         inner_frame2.grid_columnconfigure(1,weight=1)
@@ -358,47 +380,82 @@ class Filter_Items():
         
 
         # Get the ICS Date [From]
-        ics_date_from = self.cmb_ics_date_from_year.get()
-
-        # Get the current year
-        ics_date_to = datetime.date.today().year
+        ics_date_from_month = self.cmb_ics_date_from_month.get()
+        ics_date_from_day = self.cmb_ics_date_from_day.get()
+        ics_date_from_year = self.cmb_ics_date_from_year.get()
 
         # If ics_date_from combobox is empty
-        if ics_date_from is "":
+        if ics_date_from_month == "" or ics_date_from_day == "" or ics_date_from_year == "":
             # set the ics_date_from to 2010 (The very beginning)
-            ics_date_from = 2010
+            ics_date_from = "2010-01-01"
+
         # If the ics_date_From combobox is not empty
         else:
             # Convert the ics_date_from combobox from STRING to INTEGER
-            ics_date_from = int(ics_date_from)
-            # Set the value of ics_date_to to 1 year after the ics_date_from
-            ics_date_to = ics_date_from + 1
+            ics_date_from = Utility.date_formatter(datetime.datetime(int(ics_date_from_year),
+                                              Utility.month_dictionary(1,ics_date_from_month),
+                                              int(ics_date_from_day)),1)
 
-        # Set the value of cmb_ics_date_to_year combobox
-        self.cmb_ics_date_to_year.set(ics_date_to)
+
+        # Get the ICS Date [To]
+        ics_date_to_month = self.cmb_ics_date_to_month.get()
+        ics_date_to_day = self.cmb_ics_date_to_day.get()
+        ics_date_to_year = self.cmb_ics_date_to_year.get()
+
+
+        if ics_date_to_month == "" or ics_date_to_day == "" or ics_date_to_year == "":
+            ics_date_to_month = datetime.date.today().month
+            ics_date_to_day = datetime.date.today().day
+            ics_date_to_year = datetime.date.today().year
+
+            ics_date_to = f"{ics_date_to_year}-{ics_date_to_month}-{ics_date_to_day}"
+            print(ics_date_to)
+
+        else:
+            ics_date_to = Utility.date_formatter(datetime.datetime(int(ics_date_to_year),
+                                            Utility.month_dictionary(1,ics_date_to_month),
+                                            int(ics_date_to_day)),1)
+
+
         
         article = self.ent_article_var.get()
-        
+
         quantity = self.spn_qty.get()
 
         unit = self.ent_unit_var.get()
-        
-        amount = self.spn_amount.get()
-        
-        date_acquired_from = self.cmb_date_acquired_from_year.get()
-        
-        date_acquired_to = datetime.date.today().year
-        
-        if date_acquired_from is "":
-            date_acquired_from = 2010
-        else:
-            date_acquired_from = int(date_acquired_from)
-            date_acquired_to = date_acquired_from + 1
 
-        self.cmb_date_acquired_to_year.set(date_acquired_to)
-            
+        amount = self.spn_amount.get()
+
+
+        date_acquired_from_month = self.cmb_date_acquired_from_month.get()
+        date_acquired_from_day = self.cmb_date_acquired_from_day.get()
+        date_acquired_from_year = self.cmb_date_acquired_from_year.get()
+
+        if date_acquired_from_month == "" or date_acquired_from_day == "" or date_acquired_from_year == "":
+            date_acquired_from = "2010-01-01"
+        else:
+            date_acquired_from = Utility.date_formatter(datetime.datetime(int(date_acquired_from_year),
+                                                                     Utility.month_dictionary(1, date_acquired_from_month),
+                                                                     int(date_acquired_from_day)), 1)
+
+        date_acquired_to_month = self.cmb_date_acquired_to_month.get()
+        date_acquired_to_day = self.cmb_date_acquired_to_day.get()
+        date_acquired_to_year = self.cmb_date_acquired_to_year.get()
+
+        if date_acquired_to_month == "" or date_acquired_to_day == "" or date_acquired_to_year == "":
+            date_acquired_to_month = datetime.date.today().month
+            date_acquired_to_day = datetime.date.today().day
+            date_acquired_to_year = datetime.date.today().year
+
+            date_acquired_to = f"{date_acquired_to_year}-{date_acquired_to_month}-{date_acquired_to_day}"
+        else:
+            date_acquired_to = Utility.date_formatter(datetime.datetime(int(date_acquired_to_year),
+                                            Utility.month_dictionary(1,date_acquired_to_month),
+                                            int(date_acquired_to_day)),1)
+
+
         durability = self.ent_durability_var.get()
-        
+
         dict_information = {
             # Get the office
             "office": self.cmb_office.get(),
@@ -416,36 +473,6 @@ class Filter_Items():
         for item in dict_information:
             print(item, "     ", dict_information[item])
 
-
-
-
-
-
-
-        # dict_filter_information = {
-        #     "office": self.cmb_office.get(),
-        #     "ics_date_from": int(self.cmb_ics_date_from_year.get())
-        #     "ics_date_to": Utility.date_formatter(datetime.datetime(
-        #         int(self.cmb_ics_date_to_year.get()),
-        #         Utility.month_dictionary(self.cmb_ics_date_to_month.get()),
-        #         int(self.cmb_ics_date_to_day.get()))),
-        #     "article": self.ent_article_var.get(),
-        #     "quantity": self.spn_qty.get(),
-        #     "unit": self.ent_unit_var.get(),
-        #     "amount": self.spn_amount.get(),
-        #     "date_acquired_from": Utility.date_formatter(datetime.datetime(
-        #         int(self.cmb_date_acquired_from_year.get()),
-        #         Utility.month_dictionary(self.cmb_date_acquired_from_month.get()),
-        #         int(self.cmb_date_acquired_from_day.get())),1),
-        #     "date_acquired_to": Utility.date_formatter(datetime.datetime(
-        #         int(self.cmb_date_acquired_to_year.get()),
-        #         Utility.month_dictionary(self.cmb_date_acquired_to_month.get()),
-        #         int(self.cmb_date_acquired_to_day.get())),1),
-        #     "durability": self.ent_durability_var.get()
-        # }
-        #
-        # for i in dict_filter_information.values():
-        #     print(i)
 
 
     def callback_btn_clear(self):

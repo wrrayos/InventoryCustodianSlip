@@ -63,22 +63,21 @@ class Utility:
         :param controller:
         :return:
         '''
-        dict_month = {}
+        dict_month = {
+            'January': 1,
+            'February': 2,
+            'March': 3,
+            'April': 4,
+            'May': 5,
+            'June': 6,
+            'July': 7,
+            'August': 8,
+            'September': 9,
+            'October': 10,
+            'November': 11,
+            'December': 12
+        }
         if controller == 0:
-            dict_month = {
-                'January': 1,
-                'February': 2,
-                'March': 3,
-                'April': 4,
-                'May': 5,
-                'June': 6,
-                'July': 7,
-                'August': 8,
-                'September': 9,
-                'October': 10,
-                'November': 11,
-                'December': 12
-            }
             return dict_month
         elif controller == 1:
             return dict_month[month]
