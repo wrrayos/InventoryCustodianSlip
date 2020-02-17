@@ -306,7 +306,26 @@ class Database:
                 return items
 
 
+    def filter_items(self,dict_information):
 
+        try:
+            self.curr.callproc("filter_items",(dict_information['office'],
+                                               dict_information['ics_date_from'],
+                                               dict_information['ics_date_to'],
+                                               dict_information['article'],
+                                               dict_information['quantity'],
+                                               dict_information['unit'],
+                                               dict_information['amount'],
+                                               dict_information['date_acquired_from'],
+                                               dict_information['date_acquired_to'],
+                                               dict_information['durability'],))
+            result = self.curr.stored_results()
+            for content in result:
+                items = content.fetchall()
+        except Exception as e:
+            print(e)
+        else:
+            return items
 
 
 

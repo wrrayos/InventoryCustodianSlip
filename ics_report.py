@@ -235,6 +235,7 @@ class ICS_report():
         sort_window = Filter_Items(top)
         top.attributes('-topmost',0)
         self.parent.wait_window(top)
+        self.tree_populate_search(sort_window.getter_filtered_items)
         top.mainloop()
 
     def callback_btn_generate_report(self):
@@ -470,10 +471,12 @@ class Filter_Items():
             "durability": durability
         }
 
-        for item in dict_information:
-            print(item, "     ", dict_information[item])
+        self.__items = self.db_obj.filter_items(dict_information)
+        self.parent.destroy()
 
-
+    @property
+    def getter_filtered_items(self):
+        return self.__items
 
     def callback_btn_clear(self):
         self.cmb_office.set("")
