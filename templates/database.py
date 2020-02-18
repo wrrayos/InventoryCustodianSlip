@@ -66,12 +66,13 @@ class Database:
             self.mydb.commit()
             return result
 
-    def get_ics_report(self):
+    def get_ics_report(self,item_ids):
         try:
-            query = "SELECT * FROM final_report"
-            self.curr.execute(query,)
-            result = self.curr.fetchall()
-            result = [list(x) for x in result]
+            query = "SELECT ICS_Number, IAR_Number, Office, ICS_Date, Article, Description, Quantity, Unit, Amount, Date_Acquired," \
+                    "Estimated_Useful_Life FROM final_report WHERE id = %s"
+            self.curr.execute(query,(item_ids,))
+            result = self.curr.fetchone()
+            # result = [list(x) for x in result]
         except Exception as e:
             print(e)
         else:

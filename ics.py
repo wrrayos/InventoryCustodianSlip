@@ -96,6 +96,7 @@ class ICS:
 
         ttk.Label(frame1, text="Office",style="ICS.TLabel").grid(row=2, column=0,sticky="nsew")
         self.cmb_ics_office = ttk.Combobox(frame1,state="normal", values=self.db_obj.get_offices())
+
         self.cmb_ics_office.grid(row=2, column=1,columnspan=2,sticky="nsew")
 
         # ========== END: Row 2 ========== #
@@ -105,9 +106,9 @@ class ICS:
         ttk.Label(frame1,text="Date",style="ICS.TLabel").grid(row=3,column=0,sticky="nsew")
         date_frame = ttk.Frame(frame1,style="ICS.TFrame")
 
-        self.cmb_ics_month = ttk.Combobox(date_frame,state="readonly", values=[x for x in self.dict_month.keys()])
-        self.cmb_ics_day = ttk.Combobox(date_frame,state="readonly", values=self.list_day)
-        self.cmb_ics_year = ttk.Combobox(date_frame,state="readonly", values=self.list_year)
+        self.cmb_ics_month = ttk.Combobox(date_frame,state="readonly", values=list(Utility.month_dictionary(0)))
+        self.cmb_ics_day = ttk.Combobox(date_frame,state="readonly", values=Utility.days_generator())
+        self.cmb_ics_year = ttk.Combobox(date_frame,state="readonly", values=Utility.years_generator())
 
         self.cmb_ics_month.grid(row=0, column=0,sticky="nsew")
         self.cmb_ics_day.grid(row=0, column=1,sticky="nsew")
@@ -157,9 +158,9 @@ class ICS:
 
         ttk.Label(frame2, text="Date Acquired",style="Item.TLabel").grid(row=5,column=0,sticky="nsew")
         items_date_frame = ttk.Frame(frame2,style="Inner.TFrame")
-        self.cmb_acquired_month = ttk.Combobox(items_date_frame, state="readonly", values=[x for x in self.dict_month.keys()])
-        self.cmb_acquired_day = ttk.Combobox(items_date_frame, state="readonly", values=self.list_day)
-        self.cmb_acquired_year = ttk.Combobox(items_date_frame, state="readonly", values=self.list_year)
+        self.cmb_acquired_month = ttk.Combobox(items_date_frame, state="readonly", values=[ x for x in Utility.month_dictionary(0)])
+        self.cmb_acquired_day = ttk.Combobox(items_date_frame, state="readonly", values=Utility.days_generator())
+        self.cmb_acquired_year = ttk.Combobox(items_date_frame, state="readonly", values=Utility.years_generator())
         self.cmb_acquired_month.grid(row=0, column=0,sticky="nsew")
         self.cmb_acquired_day.grid(row=0, column=1,sticky="nsew")
         self.cmb_acquired_year.grid(row=0, column=2,sticky="nsew")
@@ -220,23 +221,45 @@ class ICS:
         self.ent_useful_life_var.set("")
 
     def callback_add_item(self):
-        self.items = {
-            'quantity': self.spn_quantity.get(),
-            'unit': self.ent_unit.get(),
-            'article': self.ent_article.get(),
-            'description': self.txt_description.get("1.0","end-1c"),
-            'amount': self.ent_amount.get(),
-            'acquisition': datetime.datetime(int(self.cmb_acquired_year.get()),int(self.dict_month[self.cmb_acquired_month.get()]),int(self.cmb_acquired_day.get())),
-            'durability': self.ent_useful_life.get()
-        }
-        self.items['acquisition'] = self.items['acquisition'].strftime("%Y-%m-%d")
-        x = [x for x in self.items.values()]
-        self.tree_ics_item.insert('', tk.END, values=x)
+        try:
+            # self.items variable will save all the information per item
+            self.items = {
+                'quantity': self.spn_quantity.get(),
+                'unit': self.ent_unit.get(),
+                'article': self.ent_article.get(),
+                'description': self.txt_description.get("1.0","end-1c"),
+                'amount': self.ent_amount.get(),
+                'acquisition': datetime.datetime(int(self.cmb_acquired_year.get()),int(self.dict_month[self.cmb_acquired_month.get()]),int(self.cmb_acquired_day.get())),
+                'durability': self.ent_useful_life.get()
+            }
+        # In case an error occured. Highlight the ACQUISITION DATE
+        except Exception as e:
+            tk.messagebox.showerror("Error Occured!","Please Complete All Fields")
+        # If there are no errors occured during fetching of data
+        else:
+            # Converting acquisition format from yyyy-mm-d to yyyy-mm-dd
+            self.items['acquisition'] = Utility.date_formatter(self.items['acquisition'], 1)
+
+            # Convert dictionary's values to list
+            line = list(self.items.values())
+
+            # Show the values in the item Treeview
+            self.tree_ics_item.insert('', tk.END, values=line)
+
+            # If inserting is success, values in the fields will be removed
+            self.callback_clear_item()
+
 
     def callback_delete_item(self):
         try:
-            selected_item = self.tree_ics_item.focus()
+            # Get the current selected items in the tree
+            selected_item = (self.tree_ics_item.focus())
+
+            # Delete the selected items from the tree
             self.tree_ics_item.delete(selected_item)
+
+        # In case an error occurs
+        # This error will show when the delete button was pressed and there is no item selected in the tree
         except:
             messagebox.showerror("Selection Error","Please select an item to be deleted")
 
@@ -257,7 +280,7 @@ class ICS_edit:
         'December': 12
     }
     def __init__(self, parent, item_id):
-        self.parent=parent
+        self.parent = parent
         self.parent.grab_set()
         self.item_id = item_id
         self.db_obj = Database()
@@ -268,16 +291,24 @@ class ICS_edit:
         self.stateUI(0)
 
     def initUI(self):
+        # Removes the Treeview in the Window
         self.ics_obj.tree_ics_item.destroy()
+
+        # Removes the add button in the window
         self.ics_obj.btn_add_item.destroy()
+
+        # Removes the delete button in the window
         self.ics_obj.btn_delete_item.destroy()
+
+        # Removes the clear button in the window
         self.ics_obj.btn_clear_item.destroy()
 
+        # Add delete button in the window
         self.btn_delete = ttk.Button(self.ics_obj.frame3,text="Delete Item",command=self.callback_delete)
+
         self.btn_delete.grid(row=0,column=1,sticky="nsew")
 
     def load_information(self):
-        # self.ics_obj.btn_scan_ics.configure(lambda : os.startfile(os.getcwd() + f"\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}"))
         '''
             [0] = ics_no
             [1] = iar_no
@@ -295,41 +326,84 @@ class ICS_edit:
 
         :return:
         '''
+        # ---------- Assigning and Displaying the current information ---------- #
 
+        # Get item information based on item id
         ics_info = self.db_obj.get_ics(self.item_id)
+
+        # Assign ics number to ent_ics_no_var
         self.ics_obj.ent_ics_no_var.set(ics_info[0])
+
+        # Assign iar number to ent_iar_no_var
         self.ics_obj.ent_iar_no_var.set(ics_info[1])
 
-        # --- Scan Button Configuration --- #
-        self.old_ics_directory = ics_info[2]
-        self.old_iar_directory = ics_info[3]
-        self.ics_obj.btn_scan_ics.configure(command=lambda: os.startfile(ics_info[2]))
-        self.ics_obj.btn_scan_iar.configure(command=lambda: os.startfile(ics_info[3]))
+        # Assign the directory of ics
+        self.ics_directory = ics_info[2]
 
+        # Assign the directory of iar
+        self.iar_directory = ics_info[3]
+
+        # Assign and Display the office description
         self.ics_obj.cmb_ics_office.set(ics_info[4])
 
-        # --- Date Configuration --- #
-        new_date = Utility.date_formatter(ics_info[5],0)
-        self.ics_obj.cmb_ics_month.set(new_date[0])
-        self.ics_obj.cmb_ics_day.set(new_date[1])
-        self.ics_obj.cmb_ics_year.set(new_date[2])
+        # Assign the ics date to new date. This is an object
+        new_date = Utility.date_formatter(ics_info[5], 0)
 
+        # Assign and Display the article
         self.ics_obj.ent_article_var.set(ics_info[6])
+
+        # Assign and Display the quantity
         self.ics_obj.spn_quantity_var.set(ics_info[8])
+
+        # Assign and Display the unit
         self.ics_obj.ent_unit_var.set(ics_info[9])
-        self.ics_obj.txt_description.insert(tk.END,ics_info[7])
+
+        # Assign and Display the description
+        self.ics_obj.txt_description.insert(tk.END, ics_info[7])
+
+        # Assign and Display amount
         self.ics_obj.ent_amount_var.set(ics_info[10])
 
-        # --- Date Acquired Configuration --- #
-        new_acquired_date = Utility.date_formatter(ics_info[11],0)
+        # Assign date acquired. This is an object
+        new_acquired_date = Utility.date_formatter(ics_info[11], 0)
+
+        # Assign and Display durability
+        self.ics_obj.ent_useful_life_var.set(ics_info[12])
+
+        # ---------- Scan Button Configuration ---------- #
+        # This will assign the address of btn_scan_ics based on ics_info[2]
+        self.ics_obj.btn_scan_ics.configure(command=lambda: os.startfile(ics_info[2]))
+        # This will assign the address of btn_scan_iar based on ics_info[3]
+        self.ics_obj.btn_scan_iar.configure(command=lambda: os.startfile(ics_info[3]))
+
+        # ----------  ICS Date Configuration   ---------- #
+        # This will display the ICS Date month based on info[5]
+        self.ics_obj.cmb_ics_month.set(new_date[0])
+        # This will display the ICS Date day based on info[5]
+        self.ics_obj.cmb_ics_day.set(new_date[1])
+        # This will display the ICS Date year based on info[5]
+        self.ics_obj.cmb_ics_year.set(new_date[2])
+
+        # ---------- Date Acquired Configuration ---------- #
+        # This will display the Date Acquired month based on info[11]
         self.ics_obj.cmb_acquired_month.set(new_acquired_date[0])
+        # This will display the Date acquired day based on info[11]
         self.ics_obj.cmb_acquired_day.set(new_acquired_date[1])
+        # This will display the Date acquired year based on info[11]
         self.ics_obj.cmb_acquired_year.set(new_acquired_date[2])
 
-        self.ics_obj.ent_useful_life_var.set(ics_info[12])
+
 
 
     def stateUI(self,controller):
+        '''
+        Controller
+            [0] = Disable/Readonly
+            [1] = Edittable
+
+        :param controller:
+        :return:
+        '''
         if controller == 0:
             self.ics_obj.ent_ics_no.configure(state="readonly")
             self.ics_obj.ent_iar_no.configure(state="readonly")
@@ -371,11 +445,15 @@ class ICS_edit:
     ''' ================================= Callback Methods ============================================= '''
 
     def callback_edit(self):
+        # This will change the file from disable/readonly to editable or normal state
         self.stateUI(2)
+        # Configuring the save button
         self.ics_obj.btn_save_ics.configure(text="Save",command=self.callback_save)
 
     def callback_save(self):
+        # Confirmation popup. [True = Continue Saving][False = Cancel Saving]
         confirmation_answer = messagebox.askyesno("Edit Confirmation","Are you sure you want to save eddited information?")
+        # Checks if answer is "YES"
         if confirmation_answer is True:
             try:
                 dict_item_ics = {
@@ -385,13 +463,17 @@ class ICS_edit:
                     "ics_scan": os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
                     "iar_scan": os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
                     "office": self.ics_obj.cmb_ics_office.get(),
-                    "date": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),self.dict_month[self.ics_obj.cmb_ics_month.get()],int(self.ics_obj.cmb_ics_day.get())),1),
+                    "date": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
+                                                                     self.dict_month[self.ics_obj.cmb_ics_month.get()],
+                                                                     int(self.ics_obj.cmb_ics_day.get())),1),
                     "article": self.ics_obj.ent_article_var.get(),
                     "quantity": self.ics_obj.spn_quantity_var.get(),
                     "unit": self.ics_obj.ent_unit_var.get(),
                     "description": self.ics_obj.txt_description.get("1.0","end-1c"),
                     "amount": self.ics_obj.ent_amount_var.get(),
-                    "date_acquired": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_acquired_year.get()),self.dict_month[self.ics_obj.cmb_acquired_month.get()],int(self.ics_obj.cmb_acquired_day.get())),1),
+                    "date_acquired": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_acquired_year.get()),
+                                                                              self.dict_month[self.ics_obj.cmb_acquired_month.get()],
+                                                                              int(self.ics_obj.cmb_acquired_day.get())),1),
                     "durability": self.ics_obj.ent_useful_life_var.get()
                 }
             except Exception as e:
@@ -400,9 +482,9 @@ class ICS_edit:
                 try:
                     self.db_obj.edit_item(dict_item_ics)
                     Utility.create_directory(dict_item_ics["ics_scan"])
-                    Utility.transfer_files(self.old_ics_directory,dict_item_ics["ics_scan"])
+                    Utility.transfer_files(self.ics_directory, dict_item_ics["ics_scan"])
                     Utility.create_directory(dict_item_ics["iar_scan"])
-                    Utility.transfer_files(self.old_iar_directory, dict_item_ics["iar_scan"])
+                    Utility.transfer_files(self.iar_directory, dict_item_ics["iar_scan"])
                 except Exception as e:
                     print(e)
                 else:

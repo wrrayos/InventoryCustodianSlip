@@ -239,7 +239,11 @@ class ICS_report():
         top.mainloop()
 
     def callback_btn_generate_report(self):
-        all_ics_items = self.db_obj.get_ics_report()
+        all_ics_items = []
+        for line in self.tree_ics_report.get_children():
+            item_id = self.tree_ics_report.item(line)['values'][0]
+            all_ics_items.append(self.db_obj.get_ics_report(item_id))
+
         Utility.generate_printable_report(all_ics_items)
 
     def callback_btn_refresh(self):
