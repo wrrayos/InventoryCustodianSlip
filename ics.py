@@ -331,6 +331,9 @@ class ICS_edit:
         # Get item information based on item id
         ics_info = self.db_obj.get_ics(self.item_id)
 
+        for item in ics_info:
+            print(item)
+
         # Assign ics number to ent_ics_no_var
         self.ics_obj.ent_ics_no_var.set(ics_info[0])
 
@@ -456,13 +459,51 @@ class ICS_edit:
         # Checks if answer is "YES"
         if confirmation_answer is True:
             try:
+                # item_id = self.item_id
+
+                ics_no = self.ics_obj.ent_ics_no_var.get()
+                iar_no = self.ics_obj.ent_iar_no_var.get()
+
+                # If the ICS No. or IAR No. is empty, error will occur
+                if ics_no == "" or iar_no == "":
+                    raise Exception
+
+                ics_scan = os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}'
+                iar_scan = os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}'
+
+                # If the new ics does not have a directory yet, it will create a new one
+
+
+                # date = Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
+                #                                                  self.dict_month[self.ics_obj.cmb_ics_month.get()],
+                #                                                  int(self.ics_obj.cmb_ics_day.get())), 1)
+                # article = self.ics_obj.ent_article_var.get()
+                # quantity = self.ics_obj.spn_quantity_var.get()
+                # unit = self.ics_obj.ent_unit_var.get()
+                # description = self.ics_obj.txt_description.get("1.0", "end-1c")
+                # amount = self.ics_obj.ent_amount_var.get()
+                # date_acquired = Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_acquired_year.get()),
+                #                                                          self.dict_month[
+                #                                                              self.ics_obj.cmb_acquired_month.get()],
+                #                                                          int(self.ics_obj.cmb_acquired_day.get())), 1)
+                # durability = self.ics_obj.ent_useful_life_var.get()
+
+
+
+
+
+
+
+
+
+
                 dict_item_ics = {
                     "item_id": self.item_id,
                     "ics_no": self.ics_obj.ent_ics_no_var.get(),
                     "iar_no": self.ics_obj.ent_iar_no_var.get(),
                     "ics_scan": os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
                     "iar_scan": os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
-                    "office": self.ics_obj.cmb_ics_office.get(),
+                    "office":self.ics_obj.cmb_ics_office.get(),
                     "date": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
                                                                      self.dict_month[self.ics_obj.cmb_ics_month.get()],
                                                                      int(self.ics_obj.cmb_ics_day.get())),1),
@@ -476,19 +517,22 @@ class ICS_edit:
                                                                               int(self.ics_obj.cmb_acquired_day.get())),1),
                     "durability": self.ics_obj.ent_useful_life_var.get()
                 }
+                self.db_obj.edit_item(dict_item_ics)
+                Utility.create_directory(os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
+
+                # If the new iar does not have a directory yet, it will create a new one
+                Utility.create_directory(os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
+
+                Utility.transfer_files(self.ics_directory,
+                                       os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
+                Utility.transfer_files(self.iar_directory,
+                                       os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
+
             except Exception as e:
-                messagebox.showerror("Error occured","Error: ",e)
+                messagebox.showerror("Error occured","Error ",e)
             else:
-                try:
-                    self.db_obj.edit_item(dict_item_ics)
-                    Utility.create_directory(dict_item_ics["ics_scan"])
-                    Utility.transfer_files(self.ics_directory, dict_item_ics["ics_scan"])
-                    Utility.create_directory(dict_item_ics["iar_scan"])
-                    Utility.transfer_files(self.iar_directory, dict_item_ics["iar_scan"])
-                except Exception as e:
-                    print(e)
-                else:
-                    messagebox.showinfo("Edit Success","Editted information has been saved to database")
+                self.parent.destroy()
+                messagebox.showinfo("Edit Success","Editted information has been saved to database")
 
 
 

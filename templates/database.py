@@ -1,5 +1,5 @@
 import mysql.connector
-import datetime
+import traceback
 
 class Database:
     def __init__(self):
@@ -32,7 +32,6 @@ class Database:
     ********************** ICS **************************
     '''
     def get_ics(self,row_contents):
-        print(row_contents)
         try:
             query = "SELECT ics.ics_no, ics.iar_no, ics.ics_scan_add, ics.iar_scan_add, offices.office_desc, ics.ics_date, " \
                     "item_ics.article, item_ics.description, item_ics.qty, item_ics.unit, item_ics.amount, item_ics.date_acquired, item_ics.est_life " \
@@ -168,47 +167,93 @@ class Database:
             self.curr.close()
             self.mydb.close()
 
-    def edit_item(self,item_info):
-        # Getting ics_id of an item
+    def edit_item(self, item_new_info):
+        '''
+            item_new_info['item_id']
+            item_new_info['ics_no']
+            item_new_info['iar_no']
+            item_new_info['ics_scan']
+            item_new_info['iar_scan']
+            item_new_info['office']
+            item_new_info['date']
+            item_new_info['article']
+            item_new_info['quantity']
+            item_new_info['unit']
+            item_new_info['description']
+            item_new_info['amount']
+            item_new_info['date_acquired']
+            item_new_info['durability']
+        :param item_new_info:
+        :return:
+        '''
+
+        # Getting ics_id of an item using the item's id
         try:
+            # Get ics_id of an item using item_id
             query = "SELECT ics_id FROM item_ics WHERE id = %s"
-            val = item_info['item_id']
+            val = item_new_info['item_id']
 
             self.curr.execute(query,(val,))
 
             ics_id = self.curr.fetchone()
+            # ics_id variable holds the ics_id of the item to be editted
+            # This ics_id purpose is to hold the new ics_id of the item
             ics_id = ics_id[0]
+
+            # This will update the item_ics table, which consist of items information
+            query = "UPDATE item_ics SET " \
+                    "article = %s," \
+                    " description = %s," \
+                    " qty = %s, unit = %s," \
+                    " amount = %s," \
+                    " date_acquired = %s," \
+                    " est_life = %s " \
+                    "WHERE id = %s"
+
+            self.curr.execute(query, (item_new_info['article'],
+                                      item_new_info['description'],
+                                      item_new_info['quantity'],
+                                      item_new_info['unit'],
+                                      item_new_info['amount'],
+                                      item_new_info['date_acquired'],
+                                      item_new_info['durability'],
+                                      item_new_info['item_id']))
+
+
+            # This will get the office_id of an item using office_description of the delected item
+            query = "SELECT office_id FROM offices WHERE office_desc = %s"
+            self.curr.execute(query, (item_new_info['office'],))
+            office_id = self.curr.fetchone()
+
+            # office_id variable will hold the office_id
+            office_id = office_id[0]
+
+
+            # This will update the ics table in the database, which holds the secondary information of the items
+            query = "UPDATE ics " \
+                    "SET " \
+                    "ics_no = %s, " \
+                    "iar_no = %s, " \
+                    "ics_scan_add = %s, " \
+                    "iar_scan_add = %s, " \
+                    "office_id = %s, " \
+                    "ics_date = %s " \
+                    "WHERE ics_id = %s"
+
+            self.curr.execute(query,
+                              (item_new_info['ics_no'],
+                               item_new_info['iar_no'],
+                               item_new_info['ics_scan'],
+                               item_new_info['iar_scan'],
+                               office_id,
+                               item_new_info['date'],
+                               ics_id))
+
         except Exception as e:
-            print("Error in ics_id: ",e)
+            print(traceback.print_exc())
+            self.mydb.rollback()
         else:
-            try:
-                query = "UPDATE item_ics SET " \
-                        "article = %s, description = %s, qty = %s, unit = %s, amount = %s, date_acquired = %s, est_life = %s " \
-                        "WHERE id = %s"
-                self.curr.execute(query,(item_info['article'],item_info['description'],item_info['quantity'],item_info['unit'],
-                                         item_info['amount'],item_info['date_acquired'],item_info['durability'],item_info['item_id']))
-            except Exception as e:
-                print("Error in update_item: ",e)
-            else:
-                self.mydb.commit()
-                try:
-                    query = "SELECT office_id FROM offices WHERE office_desc = %s"
-                    self.curr.execute(query,(item_info['office'],))
-                    office_id = self.curr.fetchone()
-                    office_id = office_id[0]
-                except Exception as e:
-                    print("Error in office: ",e)
-                else:
-                    try:
-                        query = "UPDATE ics SET " \
-                                "ics_no = %s, iar_no = %s, ics_scan_add = %s, iar_scan_add = %s, office_id = %s, ics_date = %s " \
-                                "WHERE ics_id = %s"
-                        self.curr.execute(query,(item_info['ics_no'],item_info['iar_no'],item_info['ics_scan'],item_info['iar_scan'],
-                                                 office_id, item_info['date'],ics_id))
-                    except Exception as e:
-                        print("Error in ics: ",e)
-                    else:
-                        self.mydb.commit()
+            self.mydb.commit()
 
     def search_items(self,controller,value):
         val = value
