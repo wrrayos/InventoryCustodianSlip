@@ -8,20 +8,22 @@ from templates.utility import Utility
 
 
 class ICS_report():
-    tree_heading = ["ID","ICS No.","IAR No.", "Office", "Date", "Article", "Qty","Unit","Amount","Date Acquired","Est. Useful life"]
+    tree_heading = ["ID","Accountable Person","ICS No.","IAR No.", "Office", "Date", "Article", "Qty","Unit","Amount","Date Acquired","Est. Useful life"]
     dict_category = {
-        "ICS Number": 0,
-        "IAR Number": 1,
-        "Office": 2,
-        "ICS Date": 3,
-        "Article": 4,
-        "Quantity": 5,
-        "Unit": 6,
-        "Amount": 7,
-        "Date Acquired": 8
+        "Accountable Person": 0,
+        "ICS Number": 1,
+        "IAR Number": 2,
+        "Office": 3,
+        "ICS Date": 4,
+        "Article": 5,
+        "Quantity": 6,
+        "Unit": 7,
+        "Amount": 8,
+        "Date Acquired": 9
     }
     def __init__(self,parent):
         self.parent = parent
+        self.parent.title("Inventory Custodian Slip")
         self.db_obj = Database()
         self.style = ttk.Style()
         self.initUI()
@@ -37,7 +39,7 @@ class ICS_report():
         ttk.Label(frame1, text="Search By: ").grid(row=0,column=0)
         self.cmb_search_category_var = tk.StringVar()
         self.cmb_search_category = ttk.Combobox(frame1, state="readonly",values=[x for x in self.dict_category.keys()],textvariable=self.cmb_search_category_var)
-        self.cmb_search_category.bind("<<ComboboxSelected>>",lambda event, x=frame1:self.seach_ui_controller(x))
+        self.cmb_search_category.bind("<<ComboboxSelected>>", lambda event, x=frame1:self.search_ui_controller(x))
 
         self.cmb_search_category.grid(row=0,column=1)
         frame1.grid(row=0,column=0,sticky="nsew")
@@ -94,15 +96,18 @@ class ICS_report():
     def search_events(self,controller):
         items=[]
         if controller == 0:
+            accountable_person = self.ent_search_acc_person_var.get()
+            items = self.db_obj.search_items(0,accountable_person)
+        if controller == 1:
             ics_no = self.ent_search_ics_no_var.get()
-            items = self.db_obj.search_items(0,ics_no)
-        elif controller == 1:
-            iar_no = self.ent_search_iar_no_var.get()
-            items = self.db_obj.search_items(1,iar_no)
+            items = self.db_obj.search_items(1,ics_no)
         elif controller == 2:
-            office_desc = self.cmb_search_office.get()
-            items = self.db_obj.search_items(2,office_desc)
+            iar_no = self.ent_search_iar_no_var.get()
+            items = self.db_obj.search_items(2,iar_no)
         elif controller == 3:
+            office_desc = self.cmb_search_office.get()
+            items = self.db_obj.search_items(3,office_desc)
+        elif controller == 4:
             date_month = self.cmb_search_date_month.get()
             date_day = self.cmb_search_date_day.get()
             date_year = self.cmb_search_date_year.get()
@@ -110,20 +115,20 @@ class ICS_report():
                 dict_month = Utility.month_dictionary(0)
                 date = datetime.datetime(int(date_year),dict_month[date_month],int(date_day))
                 formatted_date = Utility.date_formatter(date,1)
-                items = self.db_obj.search_items(3,formatted_date)
-        elif controller == 4:
-            item_article = self.ent_search_article_var.get()
-            items = self.db_obj.search_items(4,item_article)
+                items = self.db_obj.search_items(4,formatted_date)
         elif controller == 5:
-            item_quantity = self.spn_search_quantity_var.get()
-            items = self.db_obj.search_items(5, item_quantity)
+            item_article = self.ent_search_article_var.get()
+            items = self.db_obj.search_items(5,item_article)
         elif controller == 6:
-            item_unit = self.ent_search_unit_var.get()
-            items = self.db_obj.search_items(6, item_unit)
+            item_quantity = self.spn_search_quantity_var.get()
+            items = self.db_obj.search_items(6, item_quantity)
         elif controller == 7:
-            item_unit = self.spn_search_amount_var.get()
+            item_unit = self.ent_search_unit_var.get()
             items = self.db_obj.search_items(7, item_unit)
         elif controller == 8:
+            item_unit = self.spn_search_amount_var.get()
+            items = self.db_obj.search_items(8, item_unit)
+        elif controller == 9:
             date_month = self.cmb_search_date_acquired_month.get()
             date_day = self.cmb_search_date_acquired_day.get()
             date_year = self.cmb_search_date_acquired_year.get()
@@ -131,69 +136,74 @@ class ICS_report():
                 dict_month = Utility.month_dictionary(0)
                 date = datetime.datetime(int(date_year), dict_month[date_month], int(date_day))
                 formatted_date = Utility.date_formatter(date, 1)
-                items = self.db_obj.search_items(8, formatted_date)
+                items = self.db_obj.search_items(9, formatted_date)
 
         self.tree_populate_search(items)
 
-    def seach_ui_controller(self,frame):
+    def search_ui_controller(self, frame):
         inner_frame = ttk.Frame(frame)
         controller = self.dict_category[self.cmb_search_category_var.get()]
         if controller == 0:
+            self.ent_search_acc_person_var = tk.StringVar()
+            self.ent_search_acc_person = ttk.Entry(inner_frame,textvariable=self.ent_search_acc_person_var)
+            self.ent_search_acc_person.bind("<KeyRelease>",lambda event:self.search_events(0))
+            self.ent_search_acc_person.grid(row=0,column=2,sticky="nsew")
+        elif controller == 1:
             self.ent_search_ics_no_var = tk.StringVar()
             self.ent_search_ics_no = ttk.Entry(inner_frame,textvariable=self.ent_search_ics_no_var)
-            self.ent_search_ics_no.bind('<KeyRelease>',lambda event:self.search_events(0))
+            self.ent_search_ics_no.bind('<KeyRelease>',lambda event:self.search_events(1))
             self.ent_search_ics_no.grid(row=0,column=2,sticky="nsew")
-        elif controller == 1:
+        elif controller == 2:
             self.ent_search_iar_no_var = tk.StringVar()
             self.ent_search_iar_no = ttk.Entry(inner_frame, textvariable=self.ent_search_iar_no_var)
-            self.ent_search_iar_no.bind('<KeyRelease>', lambda event: self.search_events(1))
+            self.ent_search_iar_no.bind('<KeyRelease>', lambda event: self.search_events(2))
             self.ent_search_iar_no.grid(row=0,column=2)
-        elif controller == 2:
-            self.cmb_search_office = ttk.Combobox(inner_frame,state="readonly",values=self.db_obj.get_offices())
-            self.cmb_search_office.bind('<<ComboboxSelected>>', lambda event: self.search_events(2))
-            self.cmb_search_office.grid(row=0,column=2)
         elif controller == 3:
+            self.cmb_search_office = ttk.Combobox(inner_frame,state="readonly",values=self.db_obj.get_offices())
+            self.cmb_search_office.bind('<<ComboboxSelected>>', lambda event: self.search_events(3))
+            self.cmb_search_office.grid(row=0,column=2)
+        elif controller == 4:
             self.cmb_search_date_month = ttk.Combobox(inner_frame, state="readonly",values=[x for x in Utility.month_dictionary(0).keys()])
             self.cmb_search_date_day = ttk.Combobox(inner_frame, state="readonly", values=[x for x in range(1,32)])
             self.cmb_search_date_year = ttk.Combobox(inner_frame, state="readonly", values=[x for x in range(2020,2050)])
 
-            self.cmb_search_date_month.bind('<<ComboboxSelected>>', lambda event: self.search_events(3))
-            self.cmb_search_date_day.bind('<<ComboboxSelected>>',lambda event: self.search_events(3))
-            self.cmb_search_date_year.bind('<<ComboboxSelected>>',lambda event: self.search_events(3))
+            self.cmb_search_date_month.bind('<<ComboboxSelected>>', lambda event: self.search_events(4))
+            self.cmb_search_date_day.bind('<<ComboboxSelected>>',lambda event: self.search_events(4))
+            self.cmb_search_date_year.bind('<<ComboboxSelected>>',lambda event: self.search_events(4))
 
             self.cmb_search_date_month.grid(row=0,column=2)
             self.cmb_search_date_day.grid(row=0,column=3)
             self.cmb_search_date_year.grid(row=0,column=4)
-        elif controller == 4:
+        elif controller == 5:
             self.ent_search_article_var = tk.StringVar()
             self.ent_search_article = tk.Entry(inner_frame,textvariable=self.ent_search_article_var)
-            self.ent_search_article.bind('<KeyRelease>', lambda event: self.search_events(4))
+            self.ent_search_article.bind('<KeyRelease>', lambda event: self.search_events(5))
             self.ent_search_article.grid(row=0,column=2)
-        elif controller == 5:
+        elif controller == 6:
             self.spn_search_quantity_var = tk.StringVar()
             self.spn_search_quantity = ttk.Spinbox(inner_frame, from_=1, to=9999999, textvariable=self.spn_search_quantity_var)
-            self.spn_search_quantity.bind('<KeyRelease>', lambda event: self.search_events(5))
-            self.spn_search_quantity.bind('<ButtonRelease-1>',lambda event: self.search_events(5))
+            self.spn_search_quantity.bind('<KeyRelease>', lambda event: self.search_events(6))
+            self.spn_search_quantity.bind('<ButtonRelease-1>',lambda event: self.search_events(6))
             self.spn_search_quantity.grid(row=0,column=2)
-        elif controller == 6:
+        elif controller == 7:
             self.ent_search_unit_var = tk.StringVar()
             self.ent_search_unit = ttk.Entry(inner_frame, textvariable=self.ent_search_unit_var)
-            self.ent_search_unit.bind('<KeyRelease>', lambda event: self.search_events(6))
+            self.ent_search_unit.bind('<KeyRelease>', lambda event: self.search_events(7))
             self.ent_search_unit.grid(row=0,column=2)
-        elif controller == 7:
+        elif controller == 8:
             self.spn_search_amount_var = tk.StringVar()
             self.spn_search_amount = ttk.Spinbox(inner_frame, from_=1, to=9999999, textvariable=self.spn_search_amount_var)
-            self.spn_search_amount.bind('<KeyRelease>',lambda event: self.search_events(7))
-            self.spn_search_amount.bind('<ButtonRelease-1>', lambda event: self.search_events(7))
+            self.spn_search_amount.bind('<KeyRelease>',lambda event: self.search_events(8))
+            self.spn_search_amount.bind('<ButtonRelease-1>', lambda event: self.search_events(8))
             self.spn_search_amount.grid(row=0, column=2)
-        elif controller == 8:
+        elif controller == 9:
             self.cmb_search_date_acquired_month = ttk.Combobox(inner_frame, state="readonly", values=[x for x in Utility.month_dictionary(0).keys()])
             self.cmb_search_date_acquired_day = ttk.Combobox(inner_frame, state="readonly", values=[x for x in range(1,32)])
             self.cmb_search_date_acquired_year = ttk.Combobox(inner_frame, state="readonly", values=[x for x in range(2020,2050)])
 
-            self.cmb_search_date_acquired_month.bind('<<ComboboxSelected>>', lambda event: self.search_events(8))
-            self.cmb_search_date_acquired_day.bind('<<ComboboxSelected>>', lambda event: self.search_events(8))
-            self.cmb_search_date_acquired_year.bind('<<ComboboxSelected>>', lambda event: self.search_events(8))
+            self.cmb_search_date_acquired_month.bind('<<ComboboxSelected>>', lambda event: self.search_events(9))
+            self.cmb_search_date_acquired_day.bind('<<ComboboxSelected>>', lambda event: self.search_events(9))
+            self.cmb_search_date_acquired_year.bind('<<ComboboxSelected>>', lambda event: self.search_events(9))
 
             self.cmb_search_date_acquired_month.grid(row=0,column=2)
             self.cmb_search_date_acquired_day.grid(row=0, column=3)
@@ -205,17 +215,16 @@ class ICS_report():
         self.tree_ics_report.delete(*self.tree_ics_report.get_children())
         items = [list(x) for x in items]
         for item in items:
-            item[4] = Utility.date_formatter(item[4],2)
-            item[9] = Utility.date_formatter(item[9],2)
+            item[5] = Utility.date_formatter(item[5],2)
+            item[10] = Utility.date_formatter(item[10],2)
             self.tree_ics_report.insert("", tk.END, values=item)
 
     def tree_populate(self):
         self.tree_ics_report.delete(*self.tree_ics_report.get_children())
         tree_items = [list(x) for x in self.db_obj.get_ics_items()]
-        print(tree_items)
         for item in tree_items:
-            item[4] = Utility.date_formatter(item[4],2)
-            item[9] =  Utility.date_formatter(item[9],2)
+            item[5] = Utility.date_formatter(item[5],2)
+            item[10] =  Utility.date_formatter(item[10],2)
             self.tree_ics_report.insert("",tk.END,values=item)
 
     ''' ***************************** Callback Methods ********************************'''
@@ -244,7 +253,11 @@ class ICS_report():
             item_id = self.tree_ics_report.item(line)['values'][0]
             all_ics_items.append(self.db_obj.get_ics_report(item_id))
 
-        Utility.generate_printable_report(all_ics_items)
+        verdict = Utility.generate_printable_report(all_ics_items)
+        if verdict == 0:
+            messagebox.showinfo("SUCCESS","Generating a report is successful")
+        elif verdict == 1:
+            messagebox.showerror("ERROR",f"An error occured while generating report /n Error: {verdict[1]}")
 
     def callback_btn_refresh(self):
         self.tree_populate()
@@ -264,8 +277,9 @@ class ICS_report():
         top.mainloop()
 
 class Filter_Items():
-    def __init__(self,parent):
+    def __init__(self, parent):
         self.parent = parent
+        self.__items = ""
         self.parent.grab_set()
         self.db_obj = Database()
         self.initUI()
@@ -288,12 +302,12 @@ class Filter_Items():
 
         self.cmb_ics_date_from_month = ttk.Combobox(inner_frame1, state="readonly", values=[x for x in Utility.month_dictionary(0)])
         self.cmb_ics_date_from_day = ttk.Combobox(inner_frame1, state="readonly", values=Utility.days_generator())
-        self.cmb_ics_date_from_year = ttk.Combobox(inner_frame1,state="readonly",values=Utility.years_generator())
+        self.cmb_ics_date_from_year = ttk.Combobox(inner_frame1, state="readonly",values=Utility.years_generator())
 
 
-        self.cmb_ics_date_to_month = ttk.Combobox(inner_frame1, state="readonly", values=[x for x in Utility.month_dictionary(0)])
-        self.cmb_ics_date_to_day = ttk.Combobox(inner_frame1, state="readonly", values=Utility.days_generator())
-        self.cmb_ics_date_to_year = ttk.Combobox(inner_frame1,state="readonly",values=Utility.years_generator())
+        self.cmb_ics_date_to_month = ttk.Combobox(inner_frame1, width=10, state="readonly", values=[x for x in Utility.month_dictionary(0)])
+        self.cmb_ics_date_to_day = ttk.Combobox(inner_frame1, width=2, state="readonly", values=Utility.days_generator())
+        self.cmb_ics_date_to_year = ttk.Combobox(inner_frame1, width=4, state="readonly",values=Utility.years_generator())
 
         self.cmb_ics_date_from_month.grid(row=1,column=1,sticky="ew")
         self.cmb_ics_date_from_day.grid(row=1,column=2,sticky="ew")
@@ -371,6 +385,12 @@ class Filter_Items():
         self.btn_cancel.grid(row=9,column=2,sticky="nse")
 
 
+        for child in inner_frame1.winfo_children():
+            child.grid_configure(padx=3, pady=5)
+
+        for child in inner_frame2.winfo_children():
+            child.grid_configure(padx=3, pady=5)
+
         frame1.grid(row=0,column=0,sticky="nsew")
         frame1.grid_columnconfigure(1,weight=1)
         for i in frame1.winfo_children():
@@ -382,7 +402,6 @@ class Filter_Items():
      ******************************** CALLBACK METHODS ******************************** 
      ********************************************************************************'''
     def callback_btn_filter(self):
-        
 
         # Get the ICS Date [From]
         ics_date_from_month = self.cmb_ics_date_from_month.get()
@@ -421,8 +440,6 @@ class Filter_Items():
                                             Utility.month_dictionary(1,ics_date_to_month),
                                             int(ics_date_to_day)),1)
 
-
-        
         article = self.ent_article_var.get()
 
         quantity = self.spn_qty.get()
@@ -497,7 +514,21 @@ class Filter_Items():
     def callback_btn_cancel(self):
         cancel_confirmation = messagebox.askyesno("Cancel Confirmation","Are you sure you want to cancel filtering?")
         if cancel_confirmation is True:
-            self.parent.destroy()
+            dict_information = {
+                # Get the office
+                "office": "",
+                "ics_date_from": "",
+                "ics_date_to": "",
+                "article": "",
+                "quantity": "",
+                "unit": "",
+                "amount": "",
+                "date_acquired_from": "",
+                "date_acquired_to": "",
+                "durability": ""
+            }
+
+        self.parent.destroy()
 
 
 

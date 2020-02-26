@@ -31,9 +31,9 @@ class Database:
     '''
     ********************** ICS **************************
     '''
-    def get_ics(self,row_contents):
+    def get_ics(self, item_id):
         try:
-            query = "SELECT ics.ics_no, ics.iar_no, ics.ics_scan_add, ics.iar_scan_add, offices.office_desc, ics.ics_date, " \
+            query = "SELECT ics.ics_no, ics.iar_no, ics.ics_scan_add, ics.iar_scan_add,ics.accountable_person, offices.office_desc, ics.ics_date, " \
                     "item_ics.article, item_ics.description, item_ics.qty, item_ics.unit, item_ics.amount, item_ics.date_acquired, item_ics.est_life " \
                     "FROM ics " \
                     "INNER JOIN offices " \
@@ -42,16 +42,23 @@ class Database:
                     "ON ics.ics_id = item_ics.ics_id " \
                     "WHERE item_ics.id = %s "
 
-            val = row_contents
+            val = item_id
 
             self.curr.execute(query,(val,))
 
             result_ics_info = self.curr.fetchall()
 
-            return result_ics_info[0]
-
         except Exception as e:
             print(e)
+        else:
+            list_temp = ["ics_no", "iar_no", "ics_scan", "iar_scan", "accountable_person",
+                         "office_description", "ics_date", "article", "description", "quantity",
+                         "unit", "amount", "date_acquired", "durability"]
+            zip_obj = zip(list_temp,result_ics_info[0])
+            dict_ics_info = dict(zip_obj)
+            return dict_ics_info
+
+
 
     def get_ics_items(self):
         try:
@@ -91,43 +98,62 @@ class Database:
         :return:
         '''
         try:
-            query = "SELECT office_id FROM offices WHERE office_desc = %s"
-            val = dict_ics['ics_office']
+            # Check if ICS No. already exists
+            query = "SELECT EXISTS (SELECT ics_id FROM ics WHERE ics_no = %s)"
+            val = dict_ics['ics_no']
             self.curr.execute(query, (val,))
-
-            office_id_tuple = self.curr.fetchone()
-            office_id = office_id_tuple[0]
-
         except Exception as e:
-            print("office problem ",e)
+            print(e)
         else:
-            try:
-                query = "INSERT INTO ics (ics_no,iar_no,ics_scan_add,iar_scan_add,office_id,ics_date) VALUES (%s,%s,%s,%s,%s,%s)"
-                val = (dict_ics['ics_no'],
-                       dict_ics['iar_no'],
-                       dict_ics['ics_scan'],
-                       dict_ics['iar_scan'],
-                       office_id,
-                       dict_ics['ics_date'])
+            result = self.curr.fetchone()
+            # If ICS No. does not exists
+            if result[0] == 0:
+                try:
+                    query = "SELECT office_id FROM offices WHERE office_desc = %s"
+                    val = dict_ics['ics_office']
+                    self.curr.execute(query, (val,))
 
-                self.curr.execute(query,val)
+                    office_id_tuple = self.curr.fetchone()
+                    office_id = office_id_tuple[0]
 
-                self.mydb.commit()
+                    query = "INSERT INTO ics (ics_no,iar_no,ics_scan_add,iar_scan_add,accountable_person,office_id,ics_date) " \
+                            "VALUES (%s,%s,%s,%s,%s,%s,%s)"
 
-            except Exception as e:
-                print("Proglem in ics-contents ",e)
-            else:
+                    val = (dict_ics['ics_no'],
+                           dict_ics['iar_no'],
+                           dict_ics['ics_scan'],
+                           dict_ics['iar_scan'],
+                           dict_ics['accountable_person'],
+                           office_id,
+                           dict_ics['ics_date'])
+
+                    self.curr.execute(query, (val,))
+                except Exception as e:
+                    print(e)
+                    self.mydb.rollback()
+                    return -1
+                else:
+                    self.mydb.commit()
                 try:
                     query = "SELECT ics_id FROM ics WHERE ics_id = (SELECT LAST_INSERT_ID())"
                     self.curr.execute(query)
 
                     result = self.curr.fetchone()
                 except Exception as e:
-                    print("Error in getting last ID: ",e)
+                    print("Error in getting last ID: ", e)
                 else:
                     self.mydb.commit()
+                    return result[0]
+            else:
+                query = "SELECT ics_id FROM ics WHERE ics_no = %s"
+                val = dict_ics['ics_no']
 
-        return result[0]
+                self.curr.execute(query,(val,))
+                result = self.curr.fetchone()
+
+                return result[0]
+
+
 
     def save_item_ics(self, values=[]):
         val = values
@@ -149,10 +175,10 @@ class Database:
                 
             '''
             self.curr.executemany(query,tuple_val)
-            self.mydb.commit()
-
         except Exception as e:
-            print(e)
+            self.mydb.rollback()
+        else:
+            self.mydb.commit()
 
     def delete_item(self,item_id):
         try:
@@ -160,9 +186,10 @@ class Database:
             val = item_id
             self.curr.execute(query,(val,))
         except Exception as e:
-            print(e)
+            return 0
         else:
             self.mydb.commit()
+            return 1
         finally:
             self.curr.close()
             self.mydb.close()
@@ -174,6 +201,7 @@ class Database:
             item_new_info['iar_no']
             item_new_info['ics_scan']
             item_new_info['iar_scan']
+            item_new_info['accountable_person']
             item_new_info['office']
             item_new_info['date']
             item_new_info['article']
@@ -227,6 +255,7 @@ class Database:
 
             # office_id variable will hold the office_id
             office_id = office_id[0]
+            print(office_id)
 
 
             # This will update the ics table in the database, which holds the secondary information of the items
@@ -236,6 +265,7 @@ class Database:
                     "iar_no = %s, " \
                     "ics_scan_add = %s, " \
                     "iar_scan_add = %s, " \
+                    "accountable_person = %s, " \
                     "office_id = %s, " \
                     "ics_date = %s " \
                     "WHERE ics_id = %s"
@@ -245,6 +275,7 @@ class Database:
                                item_new_info['iar_no'],
                                item_new_info['ics_scan'],
                                item_new_info['iar_scan'],
+                               item_new_info['accountable_person'],
                                office_id,
                                item_new_info['date'],
                                ics_id))
@@ -259,7 +290,7 @@ class Database:
         val = value
         if controller == 0:
             try:
-                self.curr.callproc("search_via_ics_number",(val,))
+                self.curr.callproc("search_via_accountable_person",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -267,10 +298,9 @@ class Database:
                 print(e)
             else:
                 return items
-
-        elif controller == 1:
+        if controller == 1:
             try:
-                self.curr.callproc("search_via_iar_number",(val,))
+                self.curr.callproc("search_via_ics_number",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -281,7 +311,7 @@ class Database:
 
         elif controller == 2:
             try:
-                self.curr.callproc("search_via_office_desc",(val,))
+                self.curr.callproc("search_via_iar_number",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -289,9 +319,10 @@ class Database:
                 print(e)
             else:
                 return items
+
         elif controller == 3:
             try:
-                self.curr.callproc("search_via_ics_date",(val,))
+                self.curr.callproc("search_via_office_desc",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -301,7 +332,7 @@ class Database:
                 return items
         elif controller == 4:
             try:
-                self.curr.callproc("search_via_item_article",(val,))
+                self.curr.callproc("search_via_ics_date",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -311,7 +342,7 @@ class Database:
                 return items
         elif controller == 5:
             try:
-                self.curr.callproc("search_via_item_quantity",(val,))
+                self.curr.callproc("search_via_item_article",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -321,7 +352,7 @@ class Database:
                 return items
         elif controller == 6:
             try:
-                self.curr.callproc("search_via_item_unit",(val,))
+                self.curr.callproc("search_via_item_quantity",(val,))
                 result = self.curr.stored_results()
                 for content in result:
                     items = content.fetchall()
@@ -330,6 +361,16 @@ class Database:
             else:
                 return items
         elif controller == 7:
+            try:
+                self.curr.callproc("search_via_item_unit",(val,))
+                result = self.curr.stored_results()
+                for content in result:
+                    items = content.fetchall()
+            except Exception as e:
+                print(e)
+            else:
+                return items
+        elif controller == 8:
             try:
                 self.curr.callproc("search_via_item_amount",(val,))
                 result = self.curr.stored_results()
@@ -340,7 +381,7 @@ class Database:
             else:
                 return items
 
-        elif controller == 8:
+        elif controller == 9:
             try:
                 self.curr.callproc("search_via_date_acquired",(val,))
                 result = self.curr.stored_results()

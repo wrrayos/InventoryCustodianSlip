@@ -93,20 +93,25 @@ class Utility:
 
     @staticmethod
     def generate_printable_report(information):
-        data_frame = pd.DataFrame({
-            'ICS Number':[x[0] for x in information],
-            'IAR Number':[x[1] for x in information],
-            'Office':[x[2] for x in information],
-            'ICS Date':[Utility.date_formatter(x[3],2) for x in information],
-            'Article': [x[4] for x in information],
-            'Description': [x[5] for x in information],
-            'Quantity': [x[6] for x in information],
-            'Unit': [x[7] for x in information],
-            'Amount': [x[8] for x in information],
-            'Date Acquired': [Utility.date_formatter(x[9],2) for x in information],
-            'Estimated Useful Life': [x[10] for x in information],
-        })
+        try:
+            data_frame = pd.DataFrame({
+                'ICS Number':[x[0] for x in information],
+                'IAR Number':[x[1] for x in information],
+                'Office':[x[2] for x in information],
+                'ICS Date':[Utility.date_formatter(x[3],2) for x in information],
+                'Article': [x[4] for x in information],
+                'Description': [x[5] for x in information],
+                'Quantity': [x[6] for x in information],
+                'Unit': [x[7] for x in information],
+                'Amount': [x[8] for x in information],
+                'Date Acquired': [Utility.date_formatter(x[9],2) for x in information],
+                'Estimated Useful Life': [x[10] for x in information],
+            })
 
-        writer = pd.ExcelWriter('C:\\Users\\Wilbert\\Desktop\\ICSReport.xlsx',engine='openpyxl')
-        data_frame.to_excel(writer,'Sheet1',index=False)
-        writer.save()
+            writer = pd.ExcelWriter('C:\\Users\\Wilbert\\Desktop\\ICSReport.xlsx',engine='openpyxl')
+            data_frame.to_excel(writer,'Sheet1',index=False)
+        except Exception as e:
+            return 1,e
+        else:
+            writer.save()
+            return 0

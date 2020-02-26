@@ -11,22 +11,22 @@ from templates.tabFrameTemplate import TabFrameTemplate
 
 
 class ICS:
-    dict_month = {
-        'January': 1,
-        'February': 2,
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-    }
-    list_day = list(range(1,32))
-    list_year = list(range(2010,2040))
+    # dict_month = {
+    #     'January': 1,
+    #     'February': 2,
+    #     'March': 3,
+    #     'April': 4,
+    #     'May': 5,
+    #     'June': 6,
+    #     'July': 7,
+    #     'August': 8,
+    #     'September': 9,
+    #     'October': 10,
+    #     'November': 11,
+    #     'December': 12
+    # }
+    # list_day = list(range(1,32))
+    # list_year = list(range(2010,2040))
     header = ['Quantity', 'Unit','Article', 'Description', 'Amount', 'Date Acquired', 'Est. Useful Life']
     def __init__(self,parent):
         self.parent = parent
@@ -93,17 +93,21 @@ class ICS:
         # ========== END: Row 1 ========== #
 
         # ========== START: Row 2 ========== #
+        ttk.Label(frame1, text="Acc. Person", style="ICS.TLabel").grid(row=2,column=0,sticky="nsew")
+        self.ent_acc_person_var = tk.StringVar()
+        self.ent_acc_person = ttk.Entry(frame1, textvariable=self.ent_acc_person_var)
 
-        ttk.Label(frame1, text="Office",style="ICS.TLabel").grid(row=2, column=0,sticky="nsew")
-        self.cmb_ics_office = ttk.Combobox(frame1,state="normal", values=self.db_obj.get_offices())
-
-        self.cmb_ics_office.grid(row=2, column=1,columnspan=2,sticky="nsew")
+        self.ent_acc_person.grid(row=2,column=1,columnspan=2,sticky="nsew")
 
         # ========== END: Row 2 ========== #
-
         # ========== START: Row 3 ========== #
+        ttk.Label(frame1, text="Office", style="ICS.TLabel").grid(row=3, column=0, sticky="nsew")
+        self.cmb_ics_office = ttk.Combobox(frame1, state="normal", values=self.db_obj.get_offices())
 
-        ttk.Label(frame1,text="Date",style="ICS.TLabel").grid(row=3,column=0,sticky="nsew")
+        self.cmb_ics_office.grid(row=3, column=1, columnspan=2, sticky="nsew")
+        # ========== END: Row 3 ========== #
+        # ========== START: Row 4 ========== #
+        ttk.Label(frame1,text="Date",style="ICS.TLabel").grid(row=4,column=0,sticky="nsew")
         date_frame = ttk.Frame(frame1,style="ICS.TFrame")
 
         self.cmb_ics_month = ttk.Combobox(date_frame,state="readonly", values=list(Utility.month_dictionary(0)))
@@ -114,11 +118,11 @@ class ICS:
         self.cmb_ics_day.grid(row=0, column=1,sticky="nsew")
         self.cmb_ics_year.grid(row=0, column=2,sticky="nsew")
 
-        date_frame.grid(row=3,column=1,sticky="nsew")
+        date_frame.grid(row=4,column=1,sticky="nsew")
         for widget in date_frame.winfo_children():
             widget.grid_configure(padx=10,pady=10)
 
-        # ========== END: Row 3 ========== #
+        # ========== END: Row 4 ========== #
 
 
         frame1.grid(row=0,column=0,sticky="nsew")
@@ -229,7 +233,7 @@ class ICS:
                 'article': self.ent_article.get(),
                 'description': self.txt_description.get("1.0","end-1c"),
                 'amount': self.ent_amount.get(),
-                'acquisition': datetime.datetime(int(self.cmb_acquired_year.get()),int(self.dict_month[self.cmb_acquired_month.get()]),int(self.cmb_acquired_day.get())),
+                'acquisition': datetime.datetime(int(self.cmb_acquired_year.get()),Utility.month_dictionary(1,self.cmb_acquired_month.get()),int(self.cmb_acquired_day.get())),
                 'durability': self.ent_useful_life.get()
             }
         # In case an error occured. Highlight the ACQUISITION DATE
@@ -265,20 +269,20 @@ class ICS:
 
 
 class ICS_edit:
-    dict_month = {
-        'January': 1,
-        'February': 2,
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-    }
+    # dict_month = {
+    #     'January': 1,
+    #     'February': 2,
+    #     'March': 3,
+    #     'April': 4,
+    #     'May': 5,
+    #     'June': 6,
+    #     'July': 7,
+    #     'August': 8,
+    #     'September': 9,
+    #     'October': 10,
+    #     'November': 11,
+    #     'December': 12
+    # }
     def __init__(self, parent, item_id):
         self.parent = parent
         self.parent.grab_set()
@@ -314,6 +318,7 @@ class ICS_edit:
             [1] = iar_no
             [2] = ics_scan
             [3] = iar_scan
+            [5] = accountable_person
             [4] = office_description
             [5] = ics_date
             [6] = article
@@ -329,55 +334,57 @@ class ICS_edit:
         # ---------- Assigning and Displaying the current information ---------- #
 
         # Get item information based on item id
-        ics_info = self.db_obj.get_ics(self.item_id)
+        dict_ics_info = self.db_obj.get_ics(self.item_id)
 
-        for item in ics_info:
-            print(item)
+
 
         # Assign ics number to ent_ics_no_var
-        self.ics_obj.ent_ics_no_var.set(ics_info[0])
+        self.ics_obj.ent_ics_no_var.set(dict_ics_info["ics_no"])
 
         # Assign iar number to ent_iar_no_var
-        self.ics_obj.ent_iar_no_var.set(ics_info[1])
+        self.ics_obj.ent_iar_no_var.set(dict_ics_info["iar_no"])
 
         # Assign the directory of ics
-        self.ics_directory = ics_info[2]
+        self.ics_directory = dict_ics_info["ics_scan"]
 
         # Assign the directory of iar
-        self.iar_directory = ics_info[3]
+        self.iar_directory = dict_ics_info["iar_scan"]
+
+        # Assign the accountable person
+        self.ics_obj.ent_acc_person_var.set(dict_ics_info["accountable_person"])
 
         # Assign and Display the office description
-        self.ics_obj.cmb_ics_office.set(ics_info[4])
+        self.ics_obj.cmb_ics_office.set(dict_ics_info["office_description"])
 
         # Assign the ics date to new date. This is an object
-        new_date = Utility.date_formatter(ics_info[5], 0)
+        new_date = Utility.date_formatter(dict_ics_info["ics_date"], 0)
 
         # Assign and Display the article
-        self.ics_obj.ent_article_var.set(ics_info[6])
+        self.ics_obj.ent_article_var.set(dict_ics_info["article"])
 
         # Assign and Display the quantity
-        self.ics_obj.spn_quantity_var.set(ics_info[8])
+        self.ics_obj.spn_quantity_var.set(dict_ics_info["quantity"])
 
         # Assign and Display the unit
-        self.ics_obj.ent_unit_var.set(ics_info[9])
+        self.ics_obj.ent_unit_var.set(dict_ics_info["unit"])
 
         # Assign and Display the description
-        self.ics_obj.txt_description.insert(tk.END, ics_info[7])
+        self.ics_obj.txt_description.insert(tk.END, dict_ics_info["description"])
 
         # Assign and Display amount
-        self.ics_obj.ent_amount_var.set(ics_info[10])
+        self.ics_obj.ent_amount_var.set(dict_ics_info["amount"])
 
         # Assign date acquired. This is an object
-        new_acquired_date = Utility.date_formatter(ics_info[11], 0)
+        new_acquired_date = Utility.date_formatter(dict_ics_info["date_acquired"], 0)
 
         # Assign and Display durability
-        self.ics_obj.ent_useful_life_var.set(ics_info[12])
+        self.ics_obj.ent_useful_life_var.set(dict_ics_info["durability"])
 
         # ---------- Scan Button Configuration ---------- #
         # This will assign the address of btn_scan_ics based on ics_info[2]
-        self.ics_obj.btn_scan_ics.configure(command=lambda: os.startfile(ics_info[2]))
+        self.ics_obj.btn_scan_ics.configure(command=lambda: os.startfile(self.ics_directory))
         # This will assign the address of btn_scan_iar based on ics_info[3]
-        self.ics_obj.btn_scan_iar.configure(command=lambda: os.startfile(ics_info[3]))
+        self.ics_obj.btn_scan_iar.configure(command=lambda: os.startfile(self.iar_directory))
 
         # ----------  ICS Date Configuration   ---------- #
         # This will display the ICS Date month based on info[5]
@@ -410,6 +417,7 @@ class ICS_edit:
         if controller == 0:
             self.ics_obj.ent_ics_no.configure(state="readonly")
             self.ics_obj.ent_iar_no.configure(state="readonly")
+            self.ics_obj.ent_acc_person.configure(state="readonly")
             self.ics_obj.cmb_ics_office.configure(state="disabled")
             self.ics_obj.cmb_ics_month.configure(state="disabled")
             self.ics_obj.cmb_ics_day.configure(state="disabled")
@@ -430,6 +438,7 @@ class ICS_edit:
         elif controller == 2:
             self.ics_obj.ent_ics_no.configure(state="normal")
             self.ics_obj.ent_iar_no.configure(state="normal")
+            self.ics_obj.ent_acc_person.configure(state="normal")
             self.ics_obj.cmb_ics_office.configure(state="readonly")
             self.ics_obj.cmb_ics_month.configure(state="readonly")
             self.ics_obj.cmb_ics_day.configure(state="readonly")
@@ -455,57 +464,24 @@ class ICS_edit:
 
     def callback_save(self):
         # Confirmation popup. [True = Continue Saving][False = Cancel Saving]
-        confirmation_answer = messagebox.askyesno("Edit Confirmation","Are you sure you want to save eddited information?")
+        confirmation_answer = messagebox.askyesno("Edit Confirmation","Are you sure you want to save editted information?")
         # Checks if answer is "YES"
         if confirmation_answer is True:
             try:
-                # item_id = self.item_id
-
-                ics_no = self.ics_obj.ent_ics_no_var.get()
-                iar_no = self.ics_obj.ent_iar_no_var.get()
-
                 # If the ICS No. or IAR No. is empty, error will occur
-                if ics_no == "" or iar_no == "":
-                    raise Exception
-
-                ics_scan = os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}'
-                iar_scan = os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}'
-
-                # If the new ics does not have a directory yet, it will create a new one
-
-
-                # date = Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
-                #                                                  self.dict_month[self.ics_obj.cmb_ics_month.get()],
-                #                                                  int(self.ics_obj.cmb_ics_day.get())), 1)
-                # article = self.ics_obj.ent_article_var.get()
-                # quantity = self.ics_obj.spn_quantity_var.get()
-                # unit = self.ics_obj.ent_unit_var.get()
-                # description = self.ics_obj.txt_description.get("1.0", "end-1c")
-                # amount = self.ics_obj.ent_amount_var.get()
-                # date_acquired = Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_acquired_year.get()),
-                #                                                          self.dict_month[
-                #                                                              self.ics_obj.cmb_acquired_month.get()],
-                #                                                          int(self.ics_obj.cmb_acquired_day.get())), 1)
-                # durability = self.ics_obj.ent_useful_life_var.get()
-
-
-
-
-
-
-
-
-
-
+                # This is needed before creating ICS or IAR folder
+                if self.ics_obj.ent_ics_no_var.get() == "" or self.ics_obj.ent_iar_no_var.get() == "":
+                    raise ValueError
                 dict_item_ics = {
                     "item_id": self.item_id,
                     "ics_no": self.ics_obj.ent_ics_no_var.get(),
                     "iar_no": self.ics_obj.ent_iar_no_var.get(),
                     "ics_scan": os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
                     "iar_scan": os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
-                    "office":self.ics_obj.cmb_ics_office.get(),
+                    "accountable_person": self.ics_obj.ent_acc_person_var.get(),
+                    "office": self.ics_obj.cmb_ics_office.get(),
                     "date": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
-                                                                     self.dict_month[self.ics_obj.cmb_ics_month.get()],
+                                                                     Utility.month_dictionary(1,self.ics_obj.cmb_ics_month.get()),
                                                                      int(self.ics_obj.cmb_ics_day.get())),1),
                     "article": self.ics_obj.ent_article_var.get(),
                     "quantity": self.ics_obj.spn_quantity_var.get(),
@@ -513,35 +489,60 @@ class ICS_edit:
                     "description": self.ics_obj.txt_description.get("1.0","end-1c"),
                     "amount": self.ics_obj.ent_amount_var.get(),
                     "date_acquired": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_acquired_year.get()),
-                                                                              self.dict_month[self.ics_obj.cmb_acquired_month.get()],
+                                                                              Utility.month_dictionary(1,self.ics_obj.cmb_acquired_month.get()),
                                                                               int(self.ics_obj.cmb_acquired_day.get())),1),
                     "durability": self.ics_obj.ent_useful_life_var.get()
                 }
+                print("wews")
+                # Save edits
                 self.db_obj.edit_item(dict_item_ics)
+
+                # If the new ics does not have a directory yet, it will create a new one
                 Utility.create_directory(os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
 
                 # If the new iar does not have a directory yet, it will create a new one
                 Utility.create_directory(os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
 
+                # Transfer files from old ics directory to new directory
                 Utility.transfer_files(self.ics_directory,
                                        os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
+
+                # Transfer files from old iar directory to new directory
                 Utility.transfer_files(self.iar_directory,
                                        os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
 
+            # Raised if ICS no field and IAR no field is empty
+            except ValueError as e:
+                messagebox.showerror("ERROR","ICS Number and IAR Number must not be empty")
+
+            # Raised in case an unepected error occurs
             except Exception as e:
-                messagebox.showerror("Error occured","Error ",e)
+                messagebox.showerror("Error occured",f"Error {e}")
+
+            # If no error occured
             else:
-                self.parent.destroy()
+                # Confirmation pop up will show
                 messagebox.showinfo("Edit Success","Editted information has been saved to database")
-
-
+                # close edit window
+                self.parent.destroy()
 
     def callback_delete(self):
-        self.db_obj.delete_item(self.item_id)
-        self.parent.destroy()
-
-    ''' ================================= Static Methods ============================================= '''
-
+        # Deletion of item confirmation
+        confirmation = messagebox.askyesno("Delete Confirmation","Are you sure you want to delete this item?")
+        # If the user confirms, the item will be deleted
+        if confirmation is True:
+            # Delete the item for item_ics table using item id
+            result = self.db_obj.delete_item(self.item_id)
+            # result = 0 if an error occured while saving to database
+            if result == 0:
+                # Pop up message informing user about saving failed
+                messagebox.showerror("ERROR","An unexpected database error occured")
+            # result = 1 if database saving succeed
+            elif result == 1:
+                # Pop up message informing user about the success
+                messagebox.showinfo("Success","Item Successfully Deleted")
+            # Close the window
+            self.parent.destroy()
 
 class ICS_insert:
     ics_image_status = False
@@ -554,102 +555,145 @@ class ICS_insert:
         self.initUI()
 
     def initUI(self):
-        self.ics_obj.btn_scan_ics.configure(text="ICS scan", command=lambda: self.save_scan(0))
-        self.ics_obj.btn_scan_iar.configure(text="IAR scan", command=lambda: self.save_scan(1))
-        self.ics_obj.btn_save_ics.configure(text="Saveeee",command=self.callback_save_ics)
+        # Configure button functionalities
+        self.ics_obj.ent_ics_no.bind("<FocusOut>",self.event_ics_directory)
+        self.ics_obj.ent_iar_no.bind("<FocusOut>",self.event_iar_directory)
+        self.ics_obj.btn_scan_ics.configure(text="Make ICS Dir", command=lambda: self.callback_save_scan(0))
+        self.ics_obj.btn_scan_iar.configure(text="Make IAR Dir", command=lambda: self.callback_save_scan(1))
+        self.ics_obj.btn_save_ics.configure(text="Save",command=self.callback_save_ics)
 
+    ''' ================================= Events ============================================= '''
 
+    def event_ics_directory(self, event=None):
+        ics_number = self.ics_obj.ent_ics_no_var.get()
+        if ics_number == "":
+            self.ics_image_status = False
+        else:
+            ics_directory = os.getcwd() + f'\\scans\\scan_ics\\{ics_number}'
+            Utility.create_directory(ics_directory)
+            self.ics_image_status = True
 
-
+    def event_iar_directory(self, event=None):
+        iar_number = self.ics_obj.ent_iar_no_var.get()
+        if iar_number == "":
+            self.ics_image_status = False
+        else:
+            iar_directory = os.getcwd() + f'\\scans\\scan_iar\\{iar_number}'
+            Utility.create_directory(iar_directory)
+            self.iar_image_status = True
     ''' ================================= callback ============================================= '''
 
-    def save_scan(self,controller):
+    def callback_save_scan(self, controller):
         '''
             controller = 0 = ics_image
             controller = 1 = iar_image
         '''
 
+        # Checks if there is an ICS No. inputted in ics_no entry
         if controller == 0:
-            if self.ics_obj.ent_ics_no_var.get() is "":
+            # If ICS No. entry is empty
+            if self.ics_obj.ent_ics_no_var.get() == "":
                 messagebox.showerror("Empty ICS Number","Please enter ics number before uploading the scanned documents")
+            # If ICS No. entry is NOT empty
             else:
                 try:
+                    # Assign the ICS folder location to a variable
                     scan_ics_dir = os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}'
-                    os.makedirs(scan_ics_dir)
-                except FileExistsError:
-                    pass
-                finally:
+                    # If directory is not yet existing, it will create a new one
+                    Utility.create_directory(scan_ics_dir)
+                # If an error occured why creating a directory
+                except Exception as e:
+                    messagebox.showerror("ERROR",e)
+                # IF directory assignment and directory creation is successful
+                else:
+                    # Open the directory, in order for the user to save the files
                     os.startfile(scan_ics_dir)
+                    # Used as an indication that the directory has been created
                     self.ics_image_status = True
 
-
+        # Checks if there is an IAR No. inputted in iar_no entry
         elif controller == 1:
+            # If IAR No. entry is empty
             if self.ics_obj.ent_iar_no_var.get() is "":
                 messagebox.showerror("Empty IAR Number","Please enter ics number before uploading the scanned documents")
+            # If IAR No. entry is NOT empty
             else:
                 try:
+                    # Assign the IAR folder location to a variable
                     scan_iar_dir = os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}'
-                    os.makedirs(scan_iar_dir)
-                except FileExistsError:
-                    pass
-                finally:
+                    # If directory is not yet existing, it will create a new one
+                    Utility.create_directory(scan_iar_dir)
+                except Exception as e:
+                    messagebox.showerror("ERROR",e)
+                else:
+                    # Open the directory, in order for the user to save the files
                     os.startfile(scan_iar_dir)
+                    # Used as an indication that the directory has been created
                     self.iar_image_status = True
 
     def callback_save_ics(self):
-        if self.ics_image_status is True and self.iar_image_status is True:
-            try:
-                dict_ics_info = {
-                    'ics_no': self.ics_obj.ent_ics_no_var.get(),
-                    'iar_no': self.ics_obj.ent_iar_no_var.get(),
-                    'ics_scan': os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
-                    'iar_scan': os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
-                    'ics_office': self.ics_obj.cmb_ics_office.get(),
-                    'ics_date':  datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),self.ics_obj.dict_month[self.ics_obj.cmb_ics_month.get()],int(self.ics_obj.cmb_ics_day.get())).strftime("%Y-%m-%d")
-                }
+        ics_month = self.ics_obj.cmb_ics_month.get()
+        ics_day = self.ics_obj.cmb_ics_day.get()
+        ics_year = self.ics_obj.cmb_ics_year.get()
 
-                for key in dict_ics_info.keys():
-                    if dict_ics_info[key] is "" or len(self.ics_obj.tree_ics_item.get_children()) == 0:
-                        raise TypeError
+        if len(self.ics_obj.tree_ics_item.get_children()) == 0:
+            messagebox.showerror("ERROR","Please add at least 1 item in the list")
+        elif ics_month == "" or ics_day == "" or ics_year == "":
+            messagebox.showerror("ERROR","Please fill all the dates")
+        elif self.ics_image_status is False or self.iar_image_status is False:
+            messagebox.showerror("ERROR","No image uploaded, please upload ICS and IAR scan")
+        else:
+            dict_ics_info = {
+                'ics_no': self.ics_obj.ent_ics_no_var.get(),
+                'iar_no': self.ics_obj.ent_iar_no_var.get(),
+                'ics_scan': os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
+                'iar_scan': os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
+                'accountable_person': self.ics_obj.ent_acc_person_var.get(),
+                'ics_office': self.ics_obj.cmb_ics_office.get(),
+                'ics_date': Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
+                                                                     Utility.month_dictionary(1,self.ics_obj.cmb_ics_month.get()),
+                                                                     int(self.ics_obj.cmb_ics_day.get())),1)
+            }
 
+            empty_field = False
+            for key in dict_ics_info.keys():
+                # If there are some empty fields or if the item is empty
+                if dict_ics_info[key] == "":
+                    empty_field = True
+                    break
 
-                ics_id = self.db_obj.save_ics(dict_ics_info)
-                print(ics_id)
-            except TypeError:
-                messagebox.showerror("Incomplete Fields","Please Complete All The Fields")
-            except KeyError:
-                messagebox.showerror("Date Error","Please Fix The ICS Date")
-            except Exception as e:
-                messagebox.showerror("Unexpected Error","An Unexpected Error Occured.\n"
-                                                        "Please Double Check The Fields")
+            if empty_field is True:
+                messagebox.showerror("ERROR","Please fill all the fields")
             else:
-               try:
-                    '''
-                        [0] = ics_id
-                        [0] = quantity
-                        [1] = unit
-                        [2] = article
-                        [3] = description
-                        [4] = amount
-                        [5] = date_acquired
-                        [6] = est useful life
-                    '''
-                    list_tree_children = []
-                    for child in self.ics_obj.tree_ics_item.get_children():
-                        list_temp_1 = []
-                        list_temp_1.append(ics_id)
-                        for item in self.ics_obj.tree_ics_item.item(child)['values']:
-                            list_temp_1.append(item)
-                        list_tree_children.append(list_temp_1)
-                    print(list_tree_children)
-                    self.db_obj.save_item_ics(list_tree_children)
-               except Exception as e:
-                    messagebox.showerror("Error Occured","Error: ",e)
-               else:
-                    messagebox.showinfo("New Value Inserted","New ICS has been successfully inserted to database")
-                    self.parent.destroy()
+                ics_id = self.db_obj.save_ics(dict_ics_info)
+                if ics_id == -1:
+                    messagebox.showerror("ERROR","An error occured while saving the ics information. Sequence 1")
+                else:
+                    try:
+                        '''
+                            [0] = ics_id
+                            [0] = quantity
+                            [1] = unit
+                            [2] = article
+                            [3] = description
+                            [4] = amount
+                            [5] = date_acquired
+                            [6] = est useful life
+                        '''
+                        list_tree_children = []
+                        for child in self.ics_obj.tree_ics_item.get_children():
+                            list_temp_1 = []
+                            list_temp_1.append(ics_id)
+                            for item in self.ics_obj.tree_ics_item.item(child)['values']:
+                                list_temp_1.append(item)
+                            list_tree_children.append(list_temp_1)
+                        print(list_tree_children)
+                        self.db_obj.save_item_ics(list_tree_children)
+                    except Exception as e:
+                        messagebox.showerror("Error Occured","Error: ",e)
+                    else:
+                        messagebox.showinfo("New Value Inserted","New ICS has been successfully inserted to database")
+                        self.parent.destroy()
 
-        elif self.ics_image_status is False:
-            messagebox.showerror("No Image Uploaded","Please Upload image before saving")
 
 
