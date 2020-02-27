@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import locale
 import numpy as np
 
 class Utility:
@@ -36,6 +37,13 @@ class Utility:
 
             # Deleting the old directory itself
             os.rmdir(old_directory)
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def open_directory(directory):
+        try:
+            os.startfile(directory)
         except Exception as e:
             print(e)
 
@@ -92,7 +100,10 @@ class Utility:
         return [x for x in range(2010,2050)]
 
     @staticmethod
-    def generate_printable_report(information):
+    def generate_printable_report(information,directory):
+        report_directory = directory + "/ICSReport.xlsx"
+        print(report_directory)
+        locale.setlocale(locale.LC_ALL,"")
         try:
             data_frame = pd.DataFrame({
                 'ICS Number':[x[0] for x in information],
@@ -103,12 +114,12 @@ class Utility:
                 'Description': [x[5] for x in information],
                 'Quantity': [x[6] for x in information],
                 'Unit': [x[7] for x in information],
-                'Amount': [x[8] for x in information],
+                'Amount': [f"{x[8]:n}" for x in information],
                 'Date Acquired': [Utility.date_formatter(x[9],2) for x in information],
                 'Estimated Useful Life': [x[10] for x in information],
             })
 
-            writer = pd.ExcelWriter('C:\\Users\\Wilbert\\Desktop\\ICSReport.xlsx',engine='openpyxl')
+            writer = pd.ExcelWriter(report_directory,engine='openpyxl')
             data_frame.to_excel(writer,'Sheet1',index=False)
         except Exception as e:
             return 1,e

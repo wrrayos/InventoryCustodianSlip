@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import filedialog
 import datetime
 from ics import ICS_insert, ICS_edit
 from templates.database import Database
@@ -248,12 +249,13 @@ class ICS_report():
         top.mainloop()
 
     def callback_btn_generate_report(self):
+        report_directory = filedialog.askdirectory(initialdir="C:\\")
         all_ics_items = []
         for line in self.tree_ics_report.get_children():
             item_id = self.tree_ics_report.item(line)['values'][0]
             all_ics_items.append(self.db_obj.get_ics_report(item_id))
 
-        verdict = Utility.generate_printable_report(all_ics_items)
+        verdict = Utility.generate_printable_report(all_ics_items,report_directory)
         if verdict == 0:
             messagebox.showinfo("SUCCESS","Generating a report is successful")
         elif verdict == 1:

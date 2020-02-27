@@ -5,6 +5,7 @@ from tkinter import messagebox
 from tkinter import scrolledtext
 from tkinter import filedialog
 from tkinter import ttk
+import locale
 
 from templates.utility import Utility
 from templates.database import Database
@@ -213,11 +214,11 @@ class ICS:
         try:
             # self.items variable will save all the information per item
             self.items = {
-                'quantity': self.spn_quantity.get(),
-                'unit': self.ent_unit.get(),
-                'article': self.ent_article.get(),
+                'quantity': float(self.spn_quantity.get().strip()),
+                'unit': self.ent_unit.get().strip(),
+                'article': self.ent_article.get().strip(),
                 'description': self.txt_description.get("1.0","end-1c"),
-                'amount': self.ent_amount.get(),
+                'amount': float(self.ent_amount.get().strip()),
                 'acquisition': datetime.datetime(int(self.cmb_acquired_year.get()),Utility.month_dictionary(1,self.cmb_acquired_month.get()),int(self.cmb_acquired_day.get())),
                 'durability': self.ent_useful_life.get()
             }
@@ -443,12 +444,13 @@ class ICS_edit:
                 # This is needed before creating ICS or IAR folder
                 if self.ics_obj.ent_ics_no_var.get() == "" or self.ics_obj.ent_iar_no_var.get() == "":
                     raise ValueError
+
                 dict_item_ics = {
                     "item_id": self.item_id,
                     "ics_no": self.ics_obj.ent_ics_no_var.get(),
                     "iar_no": self.ics_obj.ent_iar_no_var.get(),
-                    "ics_scan": os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
-                    "iar_scan": os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
+                    "ics_scan": self.ics_directory.rsplit('\\',1)[0] + f"\\{self.ics_obj.ent_ics_no_var.get()}",
+                    "iar_scan": self.iar_directory.rsplit('\\',1)[0] + f"\\{self.ics_obj.ent_iar_no_var.get()}",
                     "accountable_person": self.ics_obj.ent_acc_person_var.get(),
                     "office": self.ics_obj.cmb_ics_office.get(),
                     "date": Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
@@ -527,32 +529,37 @@ class ICS_insert:
 
     def initUI(self):
         # Configure button functionalities
-        self.ics_obj.ent_ics_no.bind("<FocusOut>",self.event_ics_directory)
-        self.ics_obj.ent_iar_no.bind("<FocusOut>",self.event_iar_directory)
+        # self.ics_obj.ent_ics_no.bind("<FocusOut>",self.event_ics_directory)
+        # self.ics_obj.ent_iar_no.bind("<FocusOut>",self.event_iar_directory)
         self.ics_obj.btn_scan_ics.configure(text="Make ICS Dir", command=lambda: self.callback_save_scan(0))
         self.ics_obj.btn_scan_iar.configure(text="Make IAR Dir", command=lambda: self.callback_save_scan(1))
         self.ics_obj.btn_save_ics.configure(text="Save",command=self.callback_save_ics)
 
     ''' ================================= Events ============================================= '''
 
-    def event_ics_directory(self, event=None):
-        ics_number = self.ics_obj.ent_ics_no_var.get()
-        if ics_number == "":
-            self.ics_image_status = False
-            messagebox.showerror("ERROR","Please enter an ICS Number.")
-        else:
-            ics_directory = filedialog.askdirectory()
-            self.ics_image_status = True
-
-    def event_iar_directory(self, event=None):
-        iar_number = self.ics_obj.ent_iar_no_var.get()
-        if iar_number == "":
-            messagebox.showerror("ERROR","Please enter an IAR Number.")
-            self.ics_image_status = False
-        else:
-            iar_directory = filedialog.askdirectory()
-            Utility.create_directory(iar_directory)
-            self.iar_image_status = True
+    # def event_ics_directory(self, event=None):
+    #     ics_number = self.ics_obj.ent_ics_no_var.get()
+    #     if ics_number == "":
+    #         self.ics_image_status = False
+    #         messagebox.showerror("ERROR","Please enter an ICS Number.")
+    #     else:
+    #         ics_directory = filedialog.askdirectory()
+    #         ics_directory = ics_directory + f"\\{ics_number}"
+    #         Utility.create_directory(ics_directory)
+    #         Utility.open_directory(ics_directory)
+    #         self.ics_image_status = True
+    #
+    # def event_iar_directory(self, event=None):
+    #     iar_number = self.ics_obj.ent_iar_no_var.get()
+    #     if iar_number == "":
+    #         messagebox.showerror("ERROR","Please enter an IAR Number.")
+    #         self.ics_image_status = False
+    #     else:
+    #         iar_directory = filedialog.askdirectory()
+    #         iar_directory = iar_directory + f"\\{iar_number}"
+    #         Utility.create_directory(iar_directory)
+    #         Utility.open_directory(iar_directory)
+    #         self.iar_image_status = True
     ''' ================================= callback ============================================= '''
 
     def callback_save_scan(self, controller):
@@ -563,68 +570,79 @@ class ICS_insert:
 
         # Checks if there is an ICS No. inputted in ics_no entry
         if controller == 0:
+            self.ics_number = self.ics_obj.ent_ics_no_var.get().strip()
             # If ICS No. entry is empty
-            if self.ics_obj.ent_ics_no_var.get() == "":
+            if self.ics_number == "":
                 messagebox.showerror("Empty ICS Number","Please enter ics number before uploading the scanned documents")
             # If ICS No. entry is NOT empty
             else:
                 try:
                     # Assign the ICS folder location to a variable
-                    scan_ics_dir = os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}'
+                    scan_ics_dir = filedialog.askdirectory(parent = self.parent,initialdir="C:\\Users\\Public\\Documents")
                     # If directory is not yet existing, it will create a new one
-                    Utility.create_directory(scan_ics_dir)
+                    if scan_ics_dir == "":
+                        messagebox.showinfo("INFO","You have entered empty directory")
+                    else:
+                        self.final_scan_ics_dir = scan_ics_dir + f"\\{self.ics_number.strip()}"
+                        Utility.create_directory((self.final_scan_ics_dir))
                 # If an error occured why creating a directory
                 except Exception as e:
                     messagebox.showerror("ERROR",e)
                 # IF directory assignment and directory creation is successful
                 else:
                     # Open the directory, in order for the user to save the files
-                    os.startfile(scan_ics_dir)
+                    os.startfile(self.final_scan_ics_dir)
                     # Used as an indication that the directory has been created
                     self.ics_image_status = True
 
         # Checks if there is an IAR No. inputted in iar_no entry
         elif controller == 1:
+            self.iar_number = self.ics_obj.ent_iar_no_var.get().strip()
             # If IAR No. entry is empty
-            if self.ics_obj.ent_iar_no_var.get() is "":
+            if self.iar_number is "":
                 messagebox.showerror("Empty IAR Number","Please enter ics number before uploading the scanned documents")
             # If IAR No. entry is NOT empty
             else:
                 try:
                     # Assign the IAR folder location to a variable
-                    scan_iar_dir = os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}'
+                    scan_iar_dir = filedialog.askdirectory()
+                    self.final_scan_iar_dir = scan_iar_dir + f"\\{self.iar_number}"
                     # If directory is not yet existing, it will create a new one
-                    Utility.create_directory(scan_iar_dir)
+                    Utility.create_directory((self.final_scan_iar_dir.strip()))
                 except Exception as e:
                     messagebox.showerror("ERROR",e)
                 else:
                     # Open the directory, in order for the user to save the files
-                    os.startfile(scan_iar_dir)
+                    os.startfile(self.final_scan_iar_dir)
                     # Used as an indication that the directory has been created
                     self.iar_image_status = True
 
     def callback_save_ics(self):
-        ics_month = self.ics_obj.cmb_ics_month.get()
-        ics_day = self.ics_obj.cmb_ics_day.get()
-        ics_year = self.ics_obj.cmb_ics_year.get()
+        # Get the ICS date
+        ics_month = self.ics_obj.cmb_ics_month.get().strip()
+        ics_day = self.ics_obj.cmb_ics_day.get().strip()
+        ics_year = self.ics_obj.cmb_ics_year.get().strip()
 
+        # If there are no items
         if len(self.ics_obj.tree_ics_item.get_children()) == 0:
             messagebox.showerror("ERROR","Please add at least 1 item in the list")
+        # If ICS date is empty
         elif ics_month == "" or ics_day == "" or ics_year == "":
             messagebox.showerror("ERROR","Please fill all the dates")
+        # If image not yet set
         elif self.ics_image_status is False or self.iar_image_status is False:
             messagebox.showerror("ERROR","No image uploaded, please upload ICS and IAR scan")
         else:
             dict_ics_info = {
-                'ics_no': self.ics_obj.ent_ics_no_var.get(),
-                'iar_no': self.ics_obj.ent_iar_no_var.get(),
-                'ics_scan': os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}',
-                'iar_scan': os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}',
-                'accountable_person': self.ics_obj.ent_acc_person_var.get(),
-                'ics_office': self.ics_obj.cmb_ics_office.get(),
-                'ics_date': Utility.date_formatter(datetime.datetime(int(self.ics_obj.cmb_ics_year.get()),
-                                                                     Utility.month_dictionary(1,self.ics_obj.cmb_ics_month.get()),
-                                                                     int(self.ics_obj.cmb_ics_day.get())),1)
+                'ics_no': self.ics_obj.ent_ics_no_var.get().strip(),
+                'iar_no': self.ics_obj.ent_iar_no_var.get().strip(),
+                'ics_scan': self.final_scan_ics_dir.strip(),
+                'iar_scan': self.final_scan_iar_dir.strip(),
+                'accountable_person': self.ics_obj.ent_acc_person_var.get().strip(),
+                'ics_office': self.ics_obj.cmb_ics_office.get().strip(),
+                'ics_date': Utility.date_formatter(datetime.datetime(int(ics_year),
+                                                                     Utility.month_dictionary(1,ics_month),
+                                                                     int(ics_day)),1)
             }
 
             empty_field = False
