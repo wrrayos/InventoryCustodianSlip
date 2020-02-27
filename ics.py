@@ -3,6 +3,7 @@ import datetime
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import scrolledtext
+from tkinter import filedialog
 from tkinter import ttk
 
 from templates.utility import Utility
@@ -11,22 +12,6 @@ from templates.tabFrameTemplate import TabFrameTemplate
 
 
 class ICS:
-    # dict_month = {
-    #     'January': 1,
-    #     'February': 2,
-    #     'March': 3,
-    #     'April': 4,
-    #     'May': 5,
-    #     'June': 6,
-    #     'July': 7,
-    #     'August': 8,
-    #     'September': 9,
-    #     'October': 10,
-    #     'November': 11,
-    #     'December': 12
-    # }
-    # list_day = list(range(1,32))
-    # list_year = list(range(2010,2040))
     header = ['Quantity', 'Unit','Article', 'Description', 'Amount', 'Date Acquired', 'Est. Useful Life']
     def __init__(self,parent):
         self.parent = parent
@@ -269,20 +254,6 @@ class ICS:
 
 
 class ICS_edit:
-    # dict_month = {
-    #     'January': 1,
-    #     'February': 2,
-    #     'March': 3,
-    #     'April': 4,
-    #     'May': 5,
-    #     'June': 6,
-    #     'July': 7,
-    #     'August': 8,
-    #     'September': 9,
-    #     'October': 10,
-    #     'November': 11,
-    #     'December': 12
-    # }
     def __init__(self, parent, item_id):
         self.parent = parent
         self.parent.grab_set()
@@ -568,17 +539,18 @@ class ICS_insert:
         ics_number = self.ics_obj.ent_ics_no_var.get()
         if ics_number == "":
             self.ics_image_status = False
+            messagebox.showerror("ERROR","Please enter an ICS Number.")
         else:
-            ics_directory = os.getcwd() + f'\\scans\\scan_ics\\{ics_number}'
-            Utility.create_directory(ics_directory)
+            ics_directory = filedialog.askdirectory()
             self.ics_image_status = True
 
     def event_iar_directory(self, event=None):
         iar_number = self.ics_obj.ent_iar_no_var.get()
         if iar_number == "":
+            messagebox.showerror("ERROR","Please enter an IAR Number.")
             self.ics_image_status = False
         else:
-            iar_directory = os.getcwd() + f'\\scans\\scan_iar\\{iar_number}'
+            iar_directory = filedialog.askdirectory()
             Utility.create_directory(iar_directory)
             self.iar_image_status = True
     ''' ================================= callback ============================================= '''

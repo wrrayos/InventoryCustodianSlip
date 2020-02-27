@@ -127,9 +127,16 @@ class Database:
                            office_id,
                            dict_ics['ics_date'])
 
-                    self.curr.execute(query, (val,))
+                    print(dict_ics['ics_no'])
+                    print(dict_ics['iar_no'])
+                    print(dict_ics['ics_scan'])
+                    print(dict_ics['iar_scan'])
+                    print(dict_ics['accountable_person'])
+                    print(dict_ics['ics_date'])
+
+                    self.curr.execute(query, val)
                 except Exception as e:
-                    print(e)
+                    traceback.print_exc()
                     self.mydb.rollback()
                     return -1
                 else:
