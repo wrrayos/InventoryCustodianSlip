@@ -88,7 +88,7 @@ class ICS:
         # ========== END: Row 2 ========== #
         # ========== START: Row 3 ========== #
         ttk.Label(frame1, text="Office", style="ICS.TLabel").grid(row=3, column=0, sticky="nsew")
-        self.cmb_ics_office = ttk.Combobox(frame1, state="normal", values=self.db_obj.get_offices())
+        self.cmb_ics_office = ttk.Combobox(frame1, state="readonly", values=self.db_obj.get_offices())
 
         self.cmb_ics_office.grid(row=3, column=1, columnspan=2, sticky="nsew")
         # ========== END: Row 3 ========== #
@@ -267,6 +267,7 @@ class ICS_edit:
         self.stateUI(0)
 
     def initUI(self):
+
         # Removes the Treeview in the Window
         self.ics_obj.tree_ics_item.destroy()
 
@@ -354,9 +355,11 @@ class ICS_edit:
 
         # ---------- Scan Button Configuration ---------- #
         # This will assign the address of btn_scan_ics based on ics_info[2]
-        self.ics_obj.btn_scan_ics.configure(command=lambda: os.startfile(self.ics_directory))
+        result_ics = self.ics_obj.btn_scan_ics.configure(command=lambda: Utility.open_directory(self.ics_directory))
         # This will assign the address of btn_scan_iar based on ics_info[3]
-        self.ics_obj.btn_scan_iar.configure(command=lambda: os.startfile(self.iar_directory))
+        result_iar = self.ics_obj.btn_scan_iar.configure(command=lambda: Utility.open_directory(self.iar_directory))
+
+
 
         # ----------  ICS Date Configuration   ---------- #
         # This will display the ICS Date month based on info[5]
@@ -373,8 +376,6 @@ class ICS_edit:
         self.ics_obj.cmb_acquired_day.set(new_acquired_date[1])
         # This will display the Date acquired year based on info[11]
         self.ics_obj.cmb_acquired_year.set(new_acquired_date[2])
-
-
 
 
     def stateUI(self,controller):
@@ -427,8 +428,19 @@ class ICS_edit:
             self.ics_obj.ent_useful_life.configure(state="normal")
 
     ''' ================================= Callback Methods ============================================= '''
+    def callback_ics_dir(self):
+        new_ics_dir = filedialog.askdirectory()
+        Utility.create_directory(new_ics_dir + f"\\{self.ics_obj.ent_ics_no_var.get()}")
+
+    def callback_iar_dir(self):
+        new_iar_dir = filedialog.askdirectory()
+        Utility.create_directory(new_iar_dir + f"\\{self.ics_obj.ent_iar_no_var.get()}")
+
 
     def callback_edit(self):
+        self.ics_obj.btn_scan_ics.configure(text="Make ICS dir", command=self.callback_ics_dir)
+        self.ics_obj.btn_scan_iar.configure(text="Make IAR dir", command=self.callback_iar_dir)
+
         # This will change the file from disable/readonly to editable or normal state
         self.stateUI(2)
         # Configuring the save button
@@ -466,23 +478,22 @@ class ICS_edit:
                                                                               int(self.ics_obj.cmb_acquired_day.get())),1),
                     "durability": self.ics_obj.ent_useful_life_var.get()
                 }
-                print("wews")
+
                 # Save edits
                 self.db_obj.edit_item(dict_item_ics)
 
                 # If the new ics does not have a directory yet, it will create a new one
-                Utility.create_directory(os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
+                Utility.create_directory(self.ics_directory.rsplit('\\',1)[0] + f"\\{self.ics_obj.ent_ics_no_var.get()}")
 
                 # If the new iar does not have a directory yet, it will create a new one
-                Utility.create_directory(os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
+                Utility.create_directory(self.iar_directory.rsplit('\\',1)[0] + f"\\{self.ics_obj.ent_iar_no_var.get()}")
 
-                # Transfer files from old ics directory to new directory
-                Utility.transfer_files(self.ics_directory,
-                                       os.getcwd() + f'\\scans\\scan_ics\\{self.ics_obj.ent_ics_no_var.get()}')
-
-                # Transfer files from old iar directory to new directory
-                Utility.transfer_files(self.iar_directory,
-                                       os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
+                # # Transfer files from old ics directory to new directory
+                # Utility.transfer_files(self.ics_directory, self.)
+                #
+                # # Transfer files from old iar directory to new directory
+                # Utility.transfer_files(self.iar_directory,
+                #                        os.getcwd() + f'\\scans\\scan_iar\\{self.ics_obj.ent_iar_no_var.get()}')
 
             # Raised if ICS no field and IAR no field is empty
             except ValueError as e:

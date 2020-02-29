@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import locale
-import numpy as np
+
 
 class Utility:
     @staticmethod
@@ -45,7 +45,7 @@ class Utility:
         try:
             os.startfile(directory)
         except Exception as e:
-            print(e)
+            print("File not found")
 
     @staticmethod
     def date_formatter(date, controller):
